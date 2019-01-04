@@ -2,7 +2,6 @@
 // Use of this source code is governed by the Apache 2.0
 // license that can be found in the LICENSE file.
 
-
 package crypto
 
 import (
@@ -14,11 +13,11 @@ import (
 	"math/big"
 )
 
-//src/test/java/io/nem/core/crypto/ed25519/arithmetic/MathUtils.java
-func BigInteger_ZERO() *big.Int {
+func bigIntegerZERO() *big.Int {
 	return big.NewInt(0)
 }
-func BigInteger_ONE() *big.Int {
+
+func bigIntegerONE() *big.Int {
 	return big.NewInt(1)
 }
 
@@ -46,10 +45,10 @@ func (ref *mathUtils) random() (random [32]byte) {
 func (ref *mathUtils) BytesToBigInteger(bytes []byte) *big.Int {
 
 	//return utils.BytesToBigInteger(bytes)
-	b := BigInteger_ZERO()
+	b := bigIntegerZERO()
 	for i, val := range bytes {
 		el := (&big.Int{}).SetUint64(uint64(uint8(val)) & 0xff)
-		//one := BigInteger_ONE()
+		//one := bigIntegerONE()
 		//one = one.Mul(one, el)
 		b = b.Add(b, el.Lsh(el, uint(i*8)))
 	}
@@ -85,10 +84,10 @@ func (ref *mathUtils) FieldToBigInteger(f *Ed25519FieldElement) *big.Int {
 //     * @param t The 2^25.5 bit representation.
 //     * @return The BigInteger.
 func (ref *mathUtils) IntsToBigInteger(t []intRaw) *big.Int {
-	b := BigInteger_ZERO()
+	b := bigIntegerZERO()
 	for i, val := range t {
 		el := (&big.Int{}).SetInt64(int64(val))
-		one := BigInteger_ONE()
+		one := bigIntegerONE()
 		one = one.Mul(one, el)
 		b = b.Add(b, one.Lsh(one, ref.EXPONENTS[i]))
 	}
@@ -159,7 +158,7 @@ func (ref *mathUtils) doubleScalarMultiplyGroupElements(
 // ToFieldElement Converts a *big.Int to a field element.
 func (ref *mathUtils) ToFieldElement(b *big.Int) *Ed25519FieldElement {
 
-	return (&Ed25519EncodedFieldElement{Ed25519Field_ZERO_SHORT(), ref.ToByteArray(b)}).Decode()
+	return (&Ed25519EncodedFieldElement{Ed25519FieldZeroShort(), ref.ToByteArray(b)}).Decode()
 }
 
 /**
@@ -181,7 +180,7 @@ func (ref *mathUtils) ToGroupElement(bytes []byte) (*Ed25519GroupElement, error)
 	return NewEd25519GroupElementP3(
 		ref.ToFieldElement(x),
 		ref.ToFieldElement(y),
-		Ed25519Field_ONE(),
+		Ed25519FieldOne(),
 		ref.ToFieldElement(x.Mul(x, y).Mod(x, Ed25519Field.P))), nil
 }
 
@@ -198,25 +197,25 @@ func (ref *mathUtils) GetAffineXFromAffineY(y *big.Int, shouldBeNegative bool) (
 
 	// x = sign(x) * sqrt((y^2 - 1) / (d * y^2 + 1))
 	u := (&big.Int{}).Mul(y, y)
-	u.Sub(u, BigInteger_ONE()).Mod(u, Ed25519Field.P)
+	u.Sub(u, bigIntegerONE()).Mod(u, Ed25519Field.P)
 
 	v := (&big.Int{}).Mul(ref.D, y)
-	v.Mul(v, y).Add(v, BigInteger_ONE()).Mod(v, Ed25519Field.P)
+	v.Mul(v, y).Add(v, bigIntegerONE()).Mod(v, Ed25519Field.P)
 
 	x := ref.getSqrtOfFraction(u, v)
 
 	vx2 := (&big.Int{}).Mul(v, x)
 	vx2.Mul(v, x)
 
-	if v.Sub(vx2, u).Mod(v, Ed25519Field.P).Cmp(BigInteger_ZERO()) != 0 {
-		if vx2.Add(vx2, u).Mod(vx2, Ed25519Field.P).Cmp(BigInteger_ZERO()) != 0 {
+	if v.Sub(vx2, u).Mod(v, Ed25519Field.P).Cmp(bigIntegerZERO()) != 0 {
+		if vx2.Add(vx2, u).Mod(vx2, Ed25519Field.P).Cmp(bigIntegerZERO()) != 0 {
 			return nil, errNoValidEd25519Group
 		}
 
 		x = x.Mul(x, ref.IntsToBigInteger(Ed25519Field.I.Raw)).Mod(x, Ed25519Field.P)
 	}
 
-	isNegative := x.Mod(x, big.NewInt(2)).Cmp(BigInteger_ONE()) == 0 // final
+	isNegative := x.Mod(x, big.NewInt(2)).Cmp(bigIntegerONE()) == 0 // final
 	if (shouldBeNegative && !isNegative) || (!shouldBeNegative && isNegative) {
 		x = x.Neg(x).Mod(x, Ed25519Field.P)
 	}
@@ -234,7 +233,7 @@ func (ref *mathUtils) GetAffineXFromAffineY(y *big.Int, shouldBeNegative bool) (
  */
 func (ref *mathUtils) getSqrtOfFraction(u *big.Int, v *big.Int) *big.Int { /* private static  */
 
-	one := BigInteger_ONE()
+	one := bigIntegerONE()
 	three := big.NewInt(3)
 	powV3 := (&big.Int{}).Exp(v, three, nil)
 	s := big.NewInt(7)
@@ -247,7 +246,7 @@ func (ref *mathUtils) getSqrtOfFraction(u *big.Int, v *big.Int) *big.Int { /* pr
 	return x
 }
 
-//ToRepresentation Converts a group element from one coordinate system to another.
+// ToRepresentation Converts a group element from one coordinate system to another.
 // * This method is a helper used to test various methods in Ed25519GroupElement.
 // *
 // * @param g                   The group element.
@@ -267,8 +266,8 @@ func (ref *mathUtils) ToRepresentation(g *Ed25519GroupElement, newCoorSys Coordi
 	case AFFINE:
 		return ref.getNeeCoor(gX, gY, newCoorSys)
 	case P2, P3:
-		x := XMul_YModInverseAndMod_P(gX, gZ)
-		y := XMul_YModInverseAndMod_P(gY, gZ)
+		x := xMulYModInverseAndModP(gX, gZ)
+		y := xMulYModInverseAndModP(gY, gZ)
 		return ref.getNeeCoor(
 			x,
 			y,
@@ -277,13 +276,13 @@ func (ref *mathUtils) ToRepresentation(g *Ed25519GroupElement, newCoorSys Coordi
 		if gT == nil {
 			return nil, errors.New("coordinate T must not nil for P!XP1 ")
 		}
-		x := XMul_YModInverseAndMod_P(gX, gZ)
-		y := XMul_YModInverseAndMod_P(gY, gT)
+		x := xMulYModInverseAndModP(gX, gZ)
+		y := xMulYModInverseAndModP(gY, gT)
 		return ref.getNeeCoor(x, y, newCoorSys)
 	case CACHED:
 		z := (&big.Int{}).Mul(gZ, big.NewInt(2))
-		x := XMul_YModInverseAndMod_P((&big.Int{}).Sub(gX, gY), z)
-		y := XMul_YModInverseAndMod_P((&big.Int{}).Add(gX, gY), z)
+		x := xMulYModInverseAndModP((&big.Int{}).Sub(gX, gY), z)
+		y := xMulYModInverseAndModP((&big.Int{}).Add(gX, gY), z)
 
 		return ref.getNeeCoor(x, y, newCoorSys)
 	case PRECOMPUTED:
@@ -297,10 +296,12 @@ func (ref *mathUtils) ToRepresentation(g *Ed25519GroupElement, newCoorSys Coordi
 	}
 	return nil, errors.New("NewUnsupportedOperationException")
 }
-func XMul_YModInverseAndMod_P(x *big.Int, y *big.Int) *big.Int {
+
+func xMulYModInverseAndModP(x *big.Int, y *big.Int) *big.Int {
 	res := &big.Int{}
 	return res.Mul(x, (&big.Int{}).ModInverse(y, Ed25519Field.P)).Mod(res, Ed25519Field.P)
 }
+
 func (ref *mathUtils) getNeeCoor(x, y *big.Int, newCoorSys CoordinateSystem) (*Ed25519GroupElement, error) {
 
 	x1 := ref.ToFieldElement(x)
@@ -309,16 +310,16 @@ func (ref *mathUtils) getNeeCoor(x, y *big.Int, newCoorSys CoordinateSystem) (*E
 	// Now back to the desired coordinate system.
 	switch newCoorSys {
 	case AFFINE:
-		return NewEd25519GroupElementAffine(x1, y1, Ed25519Field_ONE()), nil
+		return NewEd25519GroupElementAffine(x1, y1, Ed25519FieldOne()), nil
 	case P2:
-		return NewEd25519GroupElementP2(x1, y1, Ed25519Field_ONE()), nil
+		return NewEd25519GroupElementP2(x1, y1, Ed25519FieldOne()), nil
 	case P3:
 		m := x.Mul(x, y)
 		z := ref.ToFieldElement(m.Mod(m, Ed25519Field.P))
 
-		return NewEd25519GroupElementP3(x1, y1, Ed25519Field_ONE(), z), nil
+		return NewEd25519GroupElementP3(x1, y1, Ed25519FieldOne(), z), nil
 	case P1xP1:
-		return NewEd25519GroupElementP1XP1(x1, y1, Ed25519Field_ONE(), Ed25519Field_ONE()), nil
+		return NewEd25519GroupElementP1XP1(x1, y1, Ed25519FieldOne(), Ed25519FieldOne()), nil
 	case CACHED:
 		m := (&big.Int{}).Add(y, x)
 		x1 := ref.ToFieldElement(m.Mod(m, Ed25519Field.P))
@@ -330,7 +331,7 @@ func (ref *mathUtils) getNeeCoor(x, y *big.Int, newCoorSys CoordinateSystem) (*E
 		m = (&big.Int{}).Mul(ref.D, big.NewInt(2))
 		t := ref.ToFieldElement(m.Mul(m, x).Mul(m, y).Mod(m, Ed25519Field.P))
 
-		return NewEd25519GroupElementCached(x1, y1, Ed25519Field_ONE(), t), nil
+		return NewEd25519GroupElementCached(x1, y1, Ed25519FieldOne(), t), nil
 	case PRECOMPUTED:
 		m := (&big.Int{}).Add(y, x)
 		x1 := ref.ToFieldElement(m.Mod(m, Ed25519Field.P))
@@ -344,20 +345,21 @@ func (ref *mathUtils) getNeeCoor(x, y *big.Int, newCoorSys CoordinateSystem) (*E
 	}
 	return nil, errors.New("NewUnsupportedOperationException")
 }
+
 func (ref *mathUtils) GetRandomEncodedFieldElement(length int) *Ed25519EncodedFieldElement {
 
 	bytes := ref.GetRandomByteArray(length)
 	bytes[31] &= 0x7f
-	zero := Ed25519Field_ZERO_SHORT()
+	zero := Ed25519FieldZeroShort()
 	if length == 64 {
-		zero = Ed25519Field_ZERO_LONG()
+		zero = Ed25519FieldZeroLong()
 	} else if length != 32 {
 		panic(errors.New("wrong lenght bytes!"))
 	}
 	return &Ed25519EncodedFieldElement{zero, bytes}
 }
 
-//GetRandomGroupElement Gets a random group element in P3 coordinates.
+// GetRandomGroupElement Gets a random group element in P3 coordinates.
 // * It's NOT guaranteed that the created group element is a multiple of the base point.
 func (ref *mathUtils) GetRandomGroupElement() (el *Ed25519GroupElement) {
 	err := ref.tryToCreateObject(func() (err error) {
@@ -455,9 +457,9 @@ func (ref *mathUtils) ReduceModGroupOrder(encoded *Ed25519EncodedFieldElement) *
 func (ref *mathUtils) ToEncodedFieldElement(b *big.Int) *Ed25519EncodedFieldElement {
 
 	bytes := ref.ToByteArray(b)
-	zero := Ed25519Field_ZERO_SHORT()
+	zero := Ed25519FieldZeroShort()
 	if lenght := len(bytes); lenght == 64 {
-		zero = Ed25519Field_ZERO_LONG()
+		zero = Ed25519FieldZeroLong()
 	} else if lenght != 32 {
 		panic(errors.New("wrong lenght bytes!"))
 	}
@@ -472,23 +474,13 @@ func (ref *mathUtils) ToEncodedFieldElement(b *big.Int) *Ed25519EncodedFieldElem
  */
 func (ref *mathUtils) ToByteArray(b *big.Int) []byte {
 
-	if b.Cmp(BigInteger_ONE().Lsh(BigInteger_ONE(), 256)) >= 0 {
+	if b.Cmp(bigIntegerONE().Lsh(bigIntegerONE(), 256)) >= 0 {
 		panic(errors.New("only numbers < 2^256 are allowed"))
 	}
 
-	bytes := make([]byte, 32)
 	original := utils.BigIntToByteArray(b, 32)
-	return original
-	// Although b < 2^256, original can have length > 32 with some bytes set to 0.
-	offset := 0
-	if len(original) > 32 {
-		offset = len(original) - 32
-	}
-	for i, b := range original[offset:] {
-		bytes[len(original)-i-offset-1] = b
-	}
 
-	return bytes
+	return original
 }
 func coorModify(g, b *big.Int) *big.Int {
 	x := (&big.Int{}).Mul(g, (&big.Int{}).ModInverse(b, Ed25519Field.P))
@@ -534,7 +526,7 @@ func (ref *mathUtils) AddGroupElements(g1 *Ed25519GroupElement, g2 *Ed25519Group
 	d := &big.Int{}
 	dx1x2y1y2 := d.Mul(ref.D, g1x).Mul(d, g2x).Mul(d, g1y).Mul(d, g2y).Mod(d, Ed25519Field.P)
 
-	one := BigInteger_ONE()
+	one := bigIntegerONE()
 	x3 := ref.XMulY_Plus_ZMulT_DelD(*g1x, g2y, g2x, g1y, (&big.Int{}).Add(one, dx1x2y1y2))
 	y3 := ref.XMulY_Plus_ZMulT_DelD(*g1x, g2x, g1y, g2y, (&big.Int{}).Sub(one, dx1x2y1y2))
 	t3 := (&big.Int{}).Mul(x3, y3)
@@ -543,7 +535,7 @@ func (ref *mathUtils) AddGroupElements(g1 *Ed25519GroupElement, g2 *Ed25519Group
 	return NewEd25519GroupElementP3(
 		ref.ToFieldElement(x3),
 		ref.ToFieldElement(y3),
-		Ed25519Field_ONE(),
+		Ed25519FieldOne(),
 		ref.ToFieldElement(t3))
 }
 
@@ -552,7 +544,7 @@ func (ref *mathUtils) XMulY_Plus_ZMulT_DelD(x big.Int, y, z, t, d *big.Int) *big
 	return b.Mul(b, y).Add(b, (&big.Int{}).Mul(z, t)).Mul(b, d.ModInverse(d, Ed25519Field.P)).Mod(b, Ed25519Field.P)
 }
 
-/**
+/** DoubleGroupElement
  * Doubles a group element and returns the result in the P3 coordinate system.
  * It uses *big.Int arithmetic and the affine coordinate system.
  * This method is a helper used to test the projective group doubling formula in Ed25519GroupElement.
@@ -612,6 +604,7 @@ func (ref *mathUtils) toEncodedFieldElement(b *big.Int) (*Ed25519EncodedFieldEle
 	return NewEd25519EncodedFieldElement(ref.ToByteArray(b))
 }
 
+// MathUtils use for test operations
 var MathUtils mathUtils
 
 func init() {

@@ -9,12 +9,12 @@ type Signer struct {
 	signer DsaSigner
 }
 
-// NewSignerFromDsaSigner Creates a signer around a DsaSigner.
+// NewSigner creates a signer around a DsaSigner.
 func NewSigner(signer DsaSigner) *Signer {
 	return &Signer{signer}
 }
 
-// NewSigner creates a signer around a KeyPair.
+// NewSignerFromKeyPair creates a signer around a KeyPair.
 func NewSignerFromKeyPair(keyPair *KeyPair, engine CryptoEngine) *Signer {
 	if engine == nil {
 		engine = CryptoEngines.DefaultEngine

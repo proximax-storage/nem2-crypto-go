@@ -1,6 +1,7 @@
 // Copyright 2018 ProximaX Limited. All rights reserved.
 // Use of this source code is governed by the Apache 2.0
 // license that can be found in the LICENSE file.
+
 package crypto
 
 import (
@@ -11,7 +12,7 @@ import (
 	"math/big"
 )
 
-//Signature
+// Signature include two part of signature
 type Signature struct {
 	R []byte
 	S []byte
@@ -31,6 +32,8 @@ func NewSignature(r []byte, s []byte) (*Signature, error) {
 	ref := &Signature{r, s}
 	return ref, nil
 }
+
+// NewSignatureFromBigInt create new Signature from big.Int parts
 func NewSignatureFromBigInt(rInt, sInt *big.Int) (*Signature, error) {
 	if (rInt == nil) || (sInt == nil) ||
 		(rInt.Uint64() > math.MaxInt32) ||
@@ -44,7 +47,7 @@ func NewSignatureFromBigInt(rInt, sInt *big.Int) (*Signature, error) {
 	return NewSignature(r, s)
 }
 
-//NewSignatureFromBytes Creates a new signature from bytes array 64
+// NewSignatureFromBytes Creates a new signature from bytes array 64
 func NewSignatureFromBytes(b []byte) (*Signature, error) {
 	if len(b) < 64 {
 		return nil, errBadParamNewSignatureFromBytes
@@ -52,23 +55,19 @@ func NewSignatureFromBytes(b []byte) (*Signature, error) {
 	return NewSignature(b[:32], b[32:])
 }
 
-/**
- * Gets the R-part of the signature.
- *
- * @return The R-part of the signature.
- */
+// GetR  Gets the R-part of the signature.
 func (ref *Signature) GetR() *big.Int {
 
 	return utils.BytesToBigInteger(ref.R)
 }
 
-//GetS Gets the S-part of the signature.
+// GetS Gets the S-part of the signature.
 func (ref *Signature) GetS() *big.Int {
 
 	return utils.BytesToBigInteger(ref.S)
 }
 
-//Bytes Gets a little-endian 64-byte representation of the signature.
+// Bytes Gets a little-endian 64-byte representation of the signature.
 func (ref *Signature) Bytes() []byte {
 
 	return append(ref.R, ref.S...)

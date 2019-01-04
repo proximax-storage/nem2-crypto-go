@@ -11,10 +11,10 @@ import (
 
 func TestMathUtils_AddGroupElements_Neutral(t *testing.T) {
 	neutral := NewEd25519GroupElementP3(
-		Ed25519Field_ZERO(),
-		Ed25519Field_ONE(),
-		Ed25519Field_ONE(),
-		Ed25519Field_ZERO())
+		Ed25519FieldZero(),
+		Ed25519FieldOne(),
+		Ed25519FieldOne(),
+		Ed25519FieldZero())
 
 	for i := 0; i < 0; i++ {
 		g := MathUtils.GetRandomGroupElement()

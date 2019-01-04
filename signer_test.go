@@ -19,7 +19,7 @@ var (
 func init() {
 
 	keyPair, _ = NewRandomKeyPair()
-	contextSignature, _ = NewSignatureFromBigInt(BigInteger_ONE(), BigInteger_ONE())
+	contextSignature, _ = NewSignatureFromBigInt(bigIntegerONE(), bigIntegerONE())
 	contextDsaSigner = CryptoEngines.DefaultEngine.CreateDsaSigner(keyPair)
 }
 

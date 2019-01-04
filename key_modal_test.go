@@ -28,15 +28,15 @@ func assertPrivateKey(t *testing.T, key *PrivateKey, val *big.Int) {
 func TestNewPrivateKeyfromDecimalString(t *testing.T) {
 	val := testPrivatKeyValue
 	str := val.String()
-	key, err := NewPrivateKeyfromDecimalString(str)
+	key, err := NewPrivateKeyFromDecimalString(str)
 
-	assert.NoError(t, err, `NewPrivateKeyfromDecimalString("2275") must to return no error`)
+	assert.NoError(t, err, `NewPrivateKeyFromDecimalString("2275") must to return no error`)
 	assertPrivateKey(t, key, val)
 }
 func TestNewPrivateKeyfromDecimalString_Negative(t *testing.T) {
 	val := big.NewInt(-2275)
 	str := val.String()
-	key, err := NewPrivateKeyfromDecimalString(str)
+	key, err := NewPrivateKeyFromDecimalString(str)
 
 	if err != nil {
 		t.Fatal(err)
@@ -47,7 +47,7 @@ func TestNewPrivateKeyfromDecimalString_Negative(t *testing.T) {
 const testDecimalPrivatKeyMalformed = "22A75"
 
 func TestNewPrivatKeyfromDecimalString_Malformed(t *testing.T) {
-	_, err := NewPrivateKeyfromDecimalString(testDecimalPrivatKeyMalformed)
+	_, err := NewPrivateKeyFromDecimalString(testDecimalPrivatKeyMalformed)
 
 	assert.Error(t, err)
 }
@@ -68,7 +68,7 @@ func getBigIntFromHex(hStr string) (*big.Int, error) {
 func TestNewPrivatKeyfromHexString(t *testing.T) {
 	key, err := NewPrivateKeyfromHexString(testHexKeyValue)
 
-	assert.NoError(t, err, `NewPrivateKeyfromDecimalString("2275") must to return no error`)
+	assert.NoError(t, err, `NewPrivateKeyFromDecimalString("2275") must to return no error`)
 
 	val, err := getBigIntFromHex(testHexKeyValue)
 	if err != nil {

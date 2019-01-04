@@ -2,7 +2,6 @@
 // Use of this source code is governed by the Apache 2.0
 // license that can be found in the LICENSE file.
 
-
 package crypto
 
 import (
@@ -18,7 +17,7 @@ const numIter = 1000
 
 // region Ed25519FieldElement
 
-// TestNewEd25519FieldElement test correct lenght raw checking
+// TestNewEd25519FieldElement test correct length raw checking
 func TestNewEd25519FieldElement(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		_, err := NewEd25519FieldElement(make([]intRaw, i))
@@ -219,14 +218,14 @@ func TestDecodePlusEncodeDoesNotAlterTheEncodedFieldElement(t *testing.T) {
 func TestEd25519EncodedFieldElement_ModQReturnsExpectedResult(t *testing.T) {
 
 	for i := 0; i < numIter; i++ {
-		encoded := &Ed25519EncodedFieldElement{Ed25519Field_ZERO_LONG(), MathUtils.GetRandomByteArray(64)}
+		encoded := &Ed25519EncodedFieldElement{Ed25519FieldZeroLong(), MathUtils.GetRandomByteArray(64)}
 		reduced1 := encoded.modQ()
 		b1 := MathUtils.BytesToBigInteger(reduced1.Raw)
 
 		reduced2 := MathUtils.ReduceModGroupOrder(encoded)
 
 		assert.Equal(t, -1, b1.Cmp(Ed25519Field.P), `MathUtils.toBigInteger(reduced1).compareTo(Ed25519Field.P) and -1 must by equal !`)
-		assert.Equal(t, 1, b1.Cmp(BigInteger_ONE()), `MathUtils.toBigInteger(reduced1).compareTo(Newuint64("-1")) and 1 must by equal !`)
+		assert.Equal(t, 1, b1.Cmp(bigIntegerONE()), `MathUtils.toBigInteger(reduced1).compareTo(Newuint64("-1")) and 1 must by equal !`)
 		assert.True(t, reduced2.Equals(reduced1), `reduced1 and reduced2 must by equal ! Iter = %d`, i)
 	}
 
@@ -259,9 +258,9 @@ func TestEd25519FieldElementEncode_ReturnsCorrectByteArrayForSimpleFieldElements
 	encoded1 := fieldElement1.Encode()
 	encoded2 := fieldElement2.Encode()
 	// Assert:
-	want1, err := MathUtils.toEncodedFieldElement(BigInteger_ZERO())
+	want1, err := MathUtils.toEncodedFieldElement(bigIntegerZERO())
 	assert.Nil(t, err)
-	want2, err := MathUtils.toEncodedFieldElement(BigInteger_ONE())
+	want2, err := MathUtils.toEncodedFieldElement(bigIntegerONE())
 	assert.Nil(t, err)
 	assert.Equal(t, want1, encoded1, `encoded1 and MathUtils.toEncodedFieldElement(*big.Int.ZERO) must by equal !`)
 	assert.Equal(t, want2, encoded2, `encoded2 and MathUtils.toEncodedFieldElement(*big.Int.ONE) must by equal !`)
@@ -325,7 +324,7 @@ func TestIsNegativeReturnsCorrectResult(t *testing.T) {
 		b := MathUtils.BytesToBigInteger(values)
 		b = b.Mod(b, Ed25519Field.P)
 		b = b.Mod(b, big.NewInt(2))
-		isNegative := b.Int64() == BigInteger_ONE().Int64()
+		isNegative := b.Int64() == bigIntegerONE().Int64()
 		// Assert:
 		assert.Equal(t, encoded.IsNegative(), isNegative, `encoded.isNegative() and isNegative must by equal !`)
 	}
@@ -414,74 +413,74 @@ func TestSqrtReturnsCorrectResult(t *testing.T) {
 // region Ed25519GroupElementTest
 func TestCanBeCreatedWithP2Coordinates(t *testing.T) {
 
-	g := NewEd25519GroupElementP2(Ed25519Field_ZERO(), Ed25519Field_ONE(), Ed25519Field_ONE())
+	g := NewEd25519GroupElementP2(Ed25519FieldZero(), Ed25519FieldOne(), Ed25519FieldOne())
 
 	assert.Equal(t, g.GetCoordinateSystem(), P2, `g.GetCoordinateSystem() and P2 must by equal !`)
-	assert.Equal(t, g.GetX(), Ed25519Field_ZERO(), `g.GetX() and Ed25519Field.ZERO must by equal !`)
-	assert.Equal(t, g.GetY(), Ed25519Field_ONE(), `g.GetY() and Ed25519Field.ONE must by equal !`)
-	assert.Equal(t, g.GetZ(), Ed25519Field_ONE(), `g.GetZ() and Ed25519Field.ONE must by equal !`)
+	assert.Equal(t, g.GetX(), Ed25519FieldZero(), `g.GetX() and Ed25519Field.ZERO must by equal !`)
+	assert.Equal(t, g.GetY(), Ed25519FieldOne(), `g.GetY() and Ed25519Field.ONE must by equal !`)
+	assert.Equal(t, g.GetZ(), Ed25519FieldOne(), `g.GetZ() and Ed25519Field.ONE must by equal !`)
 	assert.Nil(t, g.GetT())
 }
 
 // @Test
 func TestCanBeCreatedWithP3Coordinates(t *testing.T) {
 
-	g := NewEd25519GroupElementP3(Ed25519Field_ZERO(), Ed25519Field_ONE(), Ed25519Field_ONE(), Ed25519Field_ZERO())
+	g := NewEd25519GroupElementP3(Ed25519FieldZero(), Ed25519FieldOne(), Ed25519FieldOne(), Ed25519FieldZero())
 
 	assert.Equal(t, g.GetCoordinateSystem(), P3, `g.GetCoordinateSystem() and P3 must by equal !`)
-	assert.Equal(t, g.GetX(), Ed25519Field_ZERO(), `g.GetX() and Ed25519Field.ZERO must by equal !`)
-	assert.Equal(t, g.GetY(), Ed25519Field_ONE(), `g.GetY() and Ed25519Field.ONE must by equal !`)
-	assert.Equal(t, g.GetZ(), Ed25519Field_ONE(), `g.GetZ() and Ed25519Field.ONE must by equal !`)
+	assert.Equal(t, g.GetX(), Ed25519FieldZero(), `g.GetX() and Ed25519Field.ZERO must by equal !`)
+	assert.Equal(t, g.GetY(), Ed25519FieldOne(), `g.GetY() and Ed25519Field.ONE must by equal !`)
+	assert.Equal(t, g.GetZ(), Ed25519FieldOne(), `g.GetZ() and Ed25519Field.ONE must by equal !`)
 }
 
 func TestCanBeCreatedWithP1P1Coordinates(t *testing.T) {
 
-	g := NewEd25519GroupElementP1XP1(Ed25519Field_ZERO(), Ed25519Field_ONE(), Ed25519Field_ONE(), Ed25519Field_ONE())
+	g := NewEd25519GroupElementP1XP1(Ed25519FieldZero(), Ed25519FieldOne(), Ed25519FieldOne(), Ed25519FieldOne())
 
 	assert.Equal(t, g.GetCoordinateSystem(), P1xP1, `g.GetCoordinateSystem() and P1xP1 must by equal !`)
-	assert.Equal(t, g.GetX(), Ed25519Field_ZERO(), `g.GetX() and Ed25519Field.ZERO must by equal !`)
-	assert.Equal(t, g.GetY(), Ed25519Field_ONE(), `g.GetY() and Ed25519Field.ONE must by equal !`)
-	assert.Equal(t, g.GetZ(), Ed25519Field_ONE(), `g.GetZ() and Ed25519Field.ONE must by equal !`)
-	assert.Equal(t, g.GetT(), Ed25519Field_ONE(), `g.GetT() and Ed25519Field.ONE must by equal !`)
+	assert.Equal(t, g.GetX(), Ed25519FieldZero(), `g.GetX() and Ed25519Field.ZERO must by equal !`)
+	assert.Equal(t, g.GetY(), Ed25519FieldOne(), `g.GetY() and Ed25519Field.ONE must by equal !`)
+	assert.Equal(t, g.GetZ(), Ed25519FieldOne(), `g.GetZ() and Ed25519Field.ONE must by equal !`)
+	assert.Equal(t, g.GetT(), Ed25519FieldOne(), `g.GetT() and Ed25519Field.ONE must by equal !`)
 }
 
 func TestCanBeCreatedWithPrecompCoordinates(t *testing.T) {
 
-	g := NewEd25519GroupElementPrecomputed(Ed25519Field_ONE(), Ed25519Field_ONE(), Ed25519Field_ZERO())
+	g := NewEd25519GroupElementPrecomputed(Ed25519FieldOne(), Ed25519FieldOne(), Ed25519FieldZero())
 
 	assert.Equal(t, g.GetCoordinateSystem(), PRECOMPUTED, `g.GetCoordinateSystem() and PRECOMPUTED must by equal !`)
-	assert.Equal(t, g.GetX(), Ed25519Field_ONE(), `g.GetX() and Ed25519Field_ONE() must by equal !`)
-	assert.Equal(t, g.GetY(), Ed25519Field_ONE(), `g.GetY() and Ed25519Field_ONE() must by equal !`)
-	assert.Equal(t, g.GetZ(), Ed25519Field_ZERO(), `g.GetZ() and Ed25519Field_ZERO() must by equal !`)
+	assert.Equal(t, g.GetX(), Ed25519FieldOne(), `g.GetX() and Ed25519FieldOne() must by equal !`)
+	assert.Equal(t, g.GetY(), Ed25519FieldOne(), `g.GetY() and Ed25519FieldOne() must by equal !`)
+	assert.Equal(t, g.GetZ(), Ed25519FieldZero(), `g.GetZ() and Ed25519FieldZero() must by equal !`)
 	assert.Nil(t, g.GetT())
 }
 
 // @Test
 func TestCanBeCreatedWithCachedCoordinates(t *testing.T) {
 
-	g := NewEd25519GroupElementCached(Ed25519Field_ONE(), Ed25519Field_ONE(), Ed25519Field_ONE(), Ed25519Field_ZERO())
+	g := NewEd25519GroupElementCached(Ed25519FieldOne(), Ed25519FieldOne(), Ed25519FieldOne(), Ed25519FieldZero())
 
 	assert.Equal(t, g.GetCoordinateSystem(), CACHED, `g.GetCoordinateSystem() and CACHED must by equal !`)
-	assert.Equal(t, g.GetX(), Ed25519Field_ONE(), `g.GetX() and Ed25519Field_ONE() must by equal !`)
-	assert.Equal(t, g.GetY(), Ed25519Field_ONE(), `g.GetY() and Ed25519Field_ONE() must by equal !`)
-	assert.Equal(t, g.GetZ(), Ed25519Field_ONE(), `g.GetZ() and Ed25519Field_ONE() must by equal !`)
-	assert.Equal(t, g.GetT(), Ed25519Field_ZERO(), `g.GetT() and Ed25519Field_ZERO() must by equal !`)
+	assert.Equal(t, g.GetX(), Ed25519FieldOne(), `g.GetX() and Ed25519FieldOne() must by equal !`)
+	assert.Equal(t, g.GetY(), Ed25519FieldOne(), `g.GetY() and Ed25519FieldOne() must by equal !`)
+	assert.Equal(t, g.GetZ(), Ed25519FieldOne(), `g.GetZ() and Ed25519FieldOne() must by equal !`)
+	assert.Equal(t, g.GetT(), Ed25519FieldZero(), `g.GetT() and Ed25519FieldZero() must by equal !`)
 }
 
 func TestCanBeCreatedWithSpecifiedCoordinates(t *testing.T) {
 
 	g := NewEd25519GroupElement(
 		P3,
-		Ed25519Field_ZERO(),
-		Ed25519Field_ONE(),
-		Ed25519Field_ONE(),
-		Ed25519Field_ZERO())
+		Ed25519FieldZero(),
+		Ed25519FieldOne(),
+		Ed25519FieldOne(),
+		Ed25519FieldZero())
 
 	assert.Equal(t, g.GetCoordinateSystem(), P3, `g.GetCoordinateSystem() and P3 must by equal !`)
-	assert.Equal(t, g.GetX(), Ed25519Field_ZERO(), `g.GetX() and Ed25519Field_ZERO() must by equal !`)
-	assert.Equal(t, g.GetY(), Ed25519Field_ONE(), `g.GetY() and Ed25519Field_ONE() must by equal !`)
-	assert.Equal(t, g.GetZ(), Ed25519Field_ONE(), `g.GetZ() and Ed25519Field_ONE() must by equal !`)
-	assert.Equal(t, g.GetT(), Ed25519Field_ZERO(), `g.GetT() and Ed25519Field_ZERO() must by equal !`)
+	assert.Equal(t, g.GetX(), Ed25519FieldZero(), `g.GetX() and Ed25519FieldZero() must by equal !`)
+	assert.Equal(t, g.GetY(), Ed25519FieldOne(), `g.GetY() and Ed25519FieldOne() must by equal !`)
+	assert.Equal(t, g.GetZ(), Ed25519FieldOne(), `g.GetZ() and Ed25519FieldOne() must by equal !`)
+	assert.Equal(t, g.GetT(), Ed25519FieldZero(), `g.GetT() and Ed25519FieldZero() must by equal !`)
 }
 
 // @Test
@@ -526,7 +525,7 @@ func TestEncodeReturnsExpectedResult(t *testing.T) {
 		bytes := utils.BigIntToByteArray(MathUtils.FieldToBigInteger(g.GetY()), 32)
 
 		b := MathUtils.FieldToBigInteger(g.GetX())
-		if b.Mod(b, big.NewInt(2)).Cmp(MathUtils.FieldToBigInteger(Ed25519Field_ONE())) == 0 {
+		if b.Mod(b, big.NewInt(2)).Cmp(MathUtils.FieldToBigInteger(Ed25519FieldOne())) == 0 {
 			bytes[31] |= 0x80
 		}
 
@@ -696,13 +695,13 @@ func TestToCachedReturnsExpectedResultIfGroupElementHasP3Representation(t *testi
 
 		x := grEl.GetX()
 		gYX := grEl.Y.add(*x)
-		gY_X := grEl.Y.subtract(*x)
-		gTM := grEl.T.multiply(Ed25519Field.D_Times_TWO)
+		gYSubX := grEl.Y.subtract(*x)
+		gTM := grEl.T.multiply(Ed25519Field.DTimesTWO)
 
 		assert.True(t, h1.GetX().Equals(&gYX), `h1.GetX() and grEl.Y.add(grEl.GetX()) must by equal !`)
-		assert.True(t, h1.GetY().Equals(&gY_X), `h1.GetY() and grEl.Y.subtract(grEl.GetX()) must by equal !`)
+		assert.True(t, h1.GetY().Equals(&gYSubX), `h1.GetY() and grEl.Y.subtract(grEl.GetX()) must by equal !`)
 		assert.True(t, h1.GetZ().Equals(grEl.GetZ()), `h1.GetZ() and grEl.GetZ() must by equal !`)
-		assert.True(t, h1.GetT().Equals(&gTM), `h1.GetT() and grEl.T.multiply(Ed25519Field.D_Times_TWO) must by equal !`)
+		assert.True(t, h1.GetT().Equals(&gTM), `h1.GetT() and grEl.T.multiply(Ed25519Field.DTimesTWO) must by equal !`)
 		if !assert.True(t, h1.Equals(h2), `h1 and h2 must by equal ! i=%d`, i) {
 			assert.True(t, h1.GetX().Equals(h2.GetX()), `h1.GetX() and grEl.Y.add(grEl.GetX()) must by equal !`)
 			assert.True(t, h1.GetY().Equals(h2.GetY()), `h1.GetY() and grEl.Y.subtract(grEl.GetX()) must by equal !`)
@@ -766,10 +765,10 @@ func TestEd25519GroupElemenAdd_AddingNeutralGroupElementDoesNotChangeGroupElemen
 
 	defer testRecover(t)
 	neutral := NewEd25519GroupElementP3(
-		Ed25519Field_ZERO(),
-		Ed25519Field_ONE(),
-		Ed25519Field_ONE(),
-		Ed25519Field_ZERO())
+		Ed25519FieldZero(),
+		Ed25519FieldOne(),
+		Ed25519FieldOne(),
+		Ed25519FieldZero())
 	for i := 0; i < numIter; i++ {
 		g := MathUtils.GetRandomGroupElement()
 
@@ -830,7 +829,7 @@ func TestGroupElement_EqualsOnlyReturnsTrueForEquivalentObjects(t *testing.T) {
 
 func TestEd25519GroupElementP3String_ReturnsCorrectRepresentation(t *testing.T) {
 
-	g := NewEd25519GroupElementP3(Ed25519Field_ZERO(), Ed25519Field_ONE(), Ed25519Field_ONE(), Ed25519Field_ZERO())
+	g := NewEd25519GroupElementP3(Ed25519FieldZero(), Ed25519FieldOne(), Ed25519FieldOne(), Ed25519FieldZero())
 	gAsString := g.String()
 	expectedString := fmt.Sprintf("X=%s\nY=%s\nZ=%s\nT=%s\n",
 		"0000000000000000000000000000000000000000000000000000000000000000",
@@ -962,7 +961,9 @@ func TestDecodePlusEncodeDoesNotAlterTheEncodedGroupElement(t *testing.T) {
 		original := MathUtils.GetRandomEncodedGroupElement()
 		grEl, err := original.Decode()
 		assert.Nil(t, err)
+
 		encoded, err := grEl.Encode()
+		assert.Nil(t, err)
 		assert.Equal(t, encoded, original, `encoded and original must by equal !`)
 	}
 
@@ -983,7 +984,10 @@ func Test_GetAffineXReturnsExpectedResult(t *testing.T) {
 
 		encEl, err := encoded.Decode()
 		assert.Nil(t, err)
+
 		el, err := MathUtils.ToRepresentation(encEl, AFFINE)
+		assert.Nil(t, err)
+
 		affineX2 := el.GetX() // final
 		assert.Equal(t, affineX1, affineX2, `affineX1 and affineX2 must by equal !`)
 	}
@@ -993,10 +997,11 @@ func Test_GetAffineXReturnsExpectedResult(t *testing.T) {
 //(expected = IllegalArgumentException.class)
 func TestGetAffineXThrowsIfEncodedGroupElementIsInvalid(t *testing.T) {
 
-	g := NewEd25519GroupElementP2(Ed25519Field_ONE(), &Ed25519Field.D, Ed25519Field_ONE()) // Ed25519GroupElement
+	g := NewEd25519GroupElementP2(Ed25519FieldOne(), &Ed25519Field.D, Ed25519FieldOne()) // Ed25519GroupElement
 	encoded, err := g.Encode()
 	assert.Nil(t, err)
-	encoded.GetAffineX()
+	_, err = encoded.GetAffineX()
+	assert.NotNil(t, err)
 }
 
 // @Test
@@ -1041,7 +1046,7 @@ func TestEqualsOnlyReturnsTrueForEquivalentObjects(t *testing.T) {
 
 func TestEd25519GroupP2ElementString_ReturnsCorrectRepresentation(t *testing.T) {
 
-	encoded, err := NewEd25519GroupElementP2(Ed25519Field_ZERO(), Ed25519Field_ONE(), Ed25519Field_ONE()).Encode()
+	encoded, err := NewEd25519GroupElementP2(Ed25519FieldZero(), Ed25519FieldOne(), Ed25519FieldOne()).Encode()
 	assert.Nil(t, err)
 	encodedAsString := encoded.String()
 	expectedString := fmt.Sprintf("x=%s\ny=%s\n",

@@ -10,6 +10,7 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
+// HashesSha3_256 return sha3 256 hash of byte
 func HashesSha3_256(b []byte) ([]byte, error) {
 	hash := sha3.New256()
 	_, err := hash.Write(b)
@@ -19,6 +20,8 @@ func HashesSha3_256(b []byte) ([]byte, error) {
 
 	return hash.Sum(nil), nil
 }
+
+// HashesSha3_512 return sha3 512 hash of byte
 func HashesSha3_512(inputs ...[]byte) ([]byte, error) {
 	hash := sha3.New512()
 	for _, b := range inputs {
@@ -31,6 +34,8 @@ func HashesSha3_512(inputs ...[]byte) ([]byte, error) {
 
 	return hash.Sum(nil), nil
 }
+
+// HashesRipemd160  return ripemd160 hash of byte
 func HashesRipemd160(b []byte) ([]byte, error) {
 	hash := ripemd160.New()
 	_, err := hash.Write(b)
@@ -46,7 +51,7 @@ func isNegativeConstantTime(b int) int {
 	return (b >> 8) & 1
 }
 
-func IsConstantTimeByteEq(b, c int) int {
+func isConstantTimeByteEq(b, c int) int {
 
 	result := 0
 	xor := b ^ c // final
