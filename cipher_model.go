@@ -2,10 +2,9 @@
 // Use of this source code is governed by the Apache 2.0
 // license that can be found in the LICENSE file.
 
-
 package crypto
 
-//Cipher Wraps IES encryption and decryption logic.
+// Cipher Wraps IES encryption and decryption logic.
 type Cipher struct {
 	cipher BlockCipher
 }
@@ -24,18 +23,21 @@ func NewCipher(senderKeyPair *KeyPair, recipientKeyPair *KeyPair, engine CryptoE
 	return ref
 }
 
-//NewCipherFromCipher creates a cipher around a cipher.
+// NewCipherFromCipher creates a cipher around a cipher.
 func NewCipherFromCipher(cipher BlockCipher) *Cipher {
 	return &Cipher{
 		cipher,
 	}
 }
 
+// Encrypt  an arbitrarily-sized message (input)
 func (ref *Cipher) Encrypt(input []byte) []byte {
 
 	return ref.cipher.Encrypt(input)
 }
 
+// Decrypt  an arbitrarily-sized message.
+//return The decrypted message or nil if decryption failed.
 func (ref *Cipher) Decrypt(input []byte) []byte {
 
 	return ref.cipher.Decrypt(input)
@@ -46,6 +48,5 @@ type BlockCipher interface {
 	// Encrypts an arbitrarily-sized message (input).
 	Encrypt(input []byte) []byte
 	// Decrypts an arbitrarily-sized message.
-	//return The decrypted message or nil if decryption failed.
 	Decrypt(input []byte) []byte
 }

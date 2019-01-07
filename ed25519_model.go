@@ -55,6 +55,7 @@ type Ed25519BlockCipher struct {
 	keyLength        int
 }
 
+// NewEd25519BlockCipher return Ed25519BlockCipher
 func NewEd25519BlockCipher(senderKeyPair *KeyPair, recipientKeyPair *KeyPair) *Ed25519BlockCipher {
 	ref := &Ed25519BlockCipher{
 		senderKeyPair,
@@ -81,6 +82,7 @@ func (ref *Ed25519BlockCipher) setupBlockCipher(sharedKey []byte, ivData []byte,
 	return cipher
 }
 
+// GetSharedKey create shared bytes
 func (ref *Ed25519BlockCipher) GetSharedKey(privateKey *PrivateKey, publicKey *PublicKey, salt []byte) ([]byte, error) {
 
 	grA, err := NewEd25519EncodedGroupElement(publicKey.Raw)
@@ -107,23 +109,27 @@ func (ref *Ed25519BlockCipher) GetSharedKey(privateKey *PrivateKey, publicKey *P
 	return HashesSha3_256(sharedKey.Raw)
 }
 
+// Encrypt slice byte
 func (ref *Ed25519BlockCipher) Encrypt(input []byte) []byte {
 
 	// Setup salt.
 	salt := make([]byte, ref.keyLength)
 	_, err := io.ReadFull(rand.Reader, salt)
 	if err != nil {
+		fmt.Println(err)
 		return nil
 	}
 	// Derive shared key.
 	sharedKey, err := ref.GetSharedKey(ref.senderKeyPair.PrivateKey, ref.recipientKeyPair.PublicKey, salt)
 	if err != nil {
 		fmt.Println(err)
+		return nil
 	}
 	// Setup IV.
 	ivData := make([]byte, 16)
 	_, err = io.ReadFull(rand.Reader, ivData)
 	if err != nil {
+		fmt.Println(err)
 		return nil
 	}
 	// Setup block cipher.
@@ -131,6 +137,7 @@ func (ref *Ed25519BlockCipher) Encrypt(input []byte) []byte {
 	// Encode.
 	buf := ref.transform(cipher, input)
 	if nil == buf {
+		fmt.Println(err)
 		return nil
 	}
 
@@ -139,6 +146,7 @@ func (ref *Ed25519BlockCipher) Encrypt(input []byte) []byte {
 	return result
 }
 
+// Decrypt slice byte
 func (ref *Ed25519BlockCipher) Decrypt(input []byte) []byte {
 
 	if len(input) < 64 {
@@ -152,6 +160,7 @@ func (ref *Ed25519BlockCipher) Decrypt(input []byte) []byte {
 	sharedKey, err := ref.GetSharedKey(ref.recipientKeyPair.PrivateKey, ref.senderKeyPair.PublicKey, salt)
 	if err != nil {
 		fmt.Println(err)
+		return nil
 	}
 	// Setup block cipher.
 	cipher := ref.setupBlockCipher(sharedKey, ivData, false)
@@ -168,7 +177,7 @@ func (ref *Ed25519BlockCipher) transform(cipher *BufferedBlockCipher, data []byt
 	return buf
 }
 
-// Ed25519DsaSigner implement DSasigned interface with Ed25519 algo
+// Ed25519DsaSigner implement DsaSigned interface with Ed25519 algo
 type Ed25519DsaSigner struct {
 	KeyPair *KeyPair
 }
@@ -178,6 +187,7 @@ func NewEd25519DsaSigner(keyPair *KeyPair) *Ed25519DsaSigner {
 	return &Ed25519DsaSigner{keyPair}
 }
 
+// Sign message
 func (ref *Ed25519DsaSigner) Sign(mess []byte) (*Signature, error) {
 
 	if !ref.KeyPair.HasPrivateKey() {
@@ -260,12 +270,12 @@ func (ref *Ed25519DsaSigner) Verify(mess []byte, signature *Signature) (res bool
 		rawEncodedA,
 		mess)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 		return false
 	}
 	h, err := NewEd25519EncodedFieldElement(hashR)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 		return false
 	}
 	// hReduced = h mod group order
@@ -281,27 +291,29 @@ func (ref *Ed25519DsaSigner) Verify(mess []byte, signature *Signature) (res bool
 	calculatedR, err := Ed25519Group.BASE_POINT().doubleScalarMultiplyVariableTime(
 		A,
 		hModQ,
-		&Ed25519EncodedFieldElement{Ed25519Field_ZERO_SHORT(), signature.S})
+		&Ed25519EncodedFieldElement{Ed25519FieldZeroShort(), signature.S})
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 		return false
 	}
 	// Compare calculated R to given R.
 	encodedCalculatedR, err := calculatedR.Encode()
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 		return false
 	}
 
 	return isEqualConstantTime(encodedCalculatedR.Raw, rawEncodedR)
 }
 
+// IsCanonicalSignature check signature on canonical
 func (ref *Ed25519DsaSigner) IsCanonicalSignature(signature *Signature) bool {
 
 	sgnS := signature.GetS().Uint64()
 	return sgnS != Ed25519Group.GROUP_ORDER.Uint64() && sgnS > 0
 }
 
+// MakeSignatureCanonical return canonical signature
 func (ref *Ed25519DsaSigner) MakeSignatureCanonical(signature *Signature) (*Signature, error) {
 
 	sign := make([]byte, 64)
@@ -335,6 +347,7 @@ func (ref *ed25519Curve) GetHalfGroupOrder() uint64 {
 type Ed25519KeyGenerator struct {
 }
 
+// NewEd25519KeyGenerator return new Ed25519KeyGenerator
 func NewEd25519KeyGenerator() *Ed25519KeyGenerator {
 	return &Ed25519KeyGenerator{}
 }
@@ -355,6 +368,7 @@ func (ref *Ed25519KeyGenerator) GenerateKeyPair() (*KeyPair, error) {
 	return NewKeyPair(privateKey, publicKey, CryptoEngines.Ed25519Engine)
 }
 
+// DerivePublicKey return public key based on Ed25519Group.BASE_POINT
 func (ref *Ed25519KeyGenerator) DerivePublicKey(privateKey *PrivateKey) *PublicKey {
 
 	a := PrepareForScalarMultiply(privateKey)

@@ -11,13 +11,13 @@ import (
 	"strconv"
 )
 
-//KeyAnalyzer Interface to analyze keys.
+// KeyAnalyzer Interface to analyze keys.
 type KeyAnalyzer interface {
 	// Gets a Value indicating whether or not the public key is compressed.
 	IsKeyCompressed(publicKey *PublicKey) bool
 }
 
-//KeyGenerator Interface for generating keys.
+// KeyGenerator Interface for generating keys.
 type KeyGenerator interface {
 	// Creates a random key pair.
 	GenerateKeyPair() (*KeyPair, error)
@@ -25,25 +25,24 @@ type KeyGenerator interface {
 	DerivePublicKey(privateKey *PrivateKey) *PublicKey
 }
 
-//PrivateKey Represents a private key.
+// PrivateKey Represents a private key.
 type PrivateKey struct {
 	// I have kept this field for compatibility
 	value *big.Int
 	Raw   []byte
 }
 
-
 // NewPrivateKey creates a new private key from []byte
 func NewPrivateKey(raw []byte) *PrivateKey {
 	return &PrivateKey{(&big.Int{}).SetBytes(raw), raw}
 }
 
-// NewPrivateKey creates a new private key from []byte
-func NewPrivateKeyfromBigInt(val *big.Int) *PrivateKey {
+// NewPrivateKeyFromBigInt creates a new private key from []byte
+func NewPrivateKeyFromBigInt(val *big.Int) *PrivateKey {
 	return &PrivateKey{val, val.Bytes()}
 }
 
-//PrivatKeyfromHexString creates a private key from a hex strings.
+// NewPrivateKeyfromHexString creates a private key from a hex strings.
 func NewPrivateKeyfromHexString(sHex string) (*PrivateKey, error) {
 	raw, err := utils.HexDecodeStringOdd(sHex)
 	if err != nil {
@@ -53,31 +52,31 @@ func NewPrivateKeyfromHexString(sHex string) (*PrivateKey, error) {
 	return NewPrivateKey(raw), nil
 }
 
-//PrivateKeyfromDecimalString creates a private key from a decimal strings.
-func NewPrivateKeyfromDecimalString(decimal string) (*PrivateKey, error) {
+// NewPrivateKeyFromDecimalString creates a private key from a decimal strings.
+func NewPrivateKeyFromDecimalString(decimal string) (*PrivateKey, error) {
 	u, err := strconv.ParseInt(decimal, 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewPrivateKeyfromBigInt(big.NewInt(u)), nil
-
+	return NewPrivateKeyFromBigInt(big.NewInt(u)), nil
 }
 
 func (ref *PrivateKey) String() string {
 	return hex.EncodeToString(ref.Raw)
 }
 
-//PublicKey  Represents a public key.
+// PublicKey represents a public key.
 type PublicKey struct {
 	Raw []byte
 }
 
-//NewPublicKey creates a new public key.
+// NewPublicKey creates a new public key.
 func NewPublicKey(raw []byte) *PublicKey {
 	return &PublicKey{raw}
 }
 
+// NewPublicKeyfromHex create public key from hex string
 func NewPublicKeyfromHex(hStr string) (*PublicKey, error) {
 	raw, err := utils.HexDecodeStringOdd(hStr)
 	if err != nil {

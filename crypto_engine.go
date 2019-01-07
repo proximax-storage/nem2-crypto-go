@@ -2,9 +2,9 @@
 // Use of this source code is governed by the Apache 2.0
 // license that can be found in the LICENSE file.
 
- package crypto
+package crypto
 
-//CryptoEngine Represents a cryptographic engine that is a factory of crypto-providers.
+// CryptoEngine represents a cryptographic engine that is a factory of crypto-providers.
 type CryptoEngine interface {
 
 	// Return The underlying curve.
@@ -19,12 +19,13 @@ type CryptoEngine interface {
 	CreateKeyAnalyzer() KeyAnalyzer
 }
 
-//cryptoEngines Static class that exposes crypto engines.
+// cryptoEngines Static class that exposes crypto engines.
 type cryptoEngines struct {
 	Ed25519Engine *Ed25519CryptoEngine
 	DefaultEngine *Ed25519CryptoEngine
 }
 
+// CryptoEngines has cryptographic engines
 var CryptoEngines = cryptoEngines{
 	&Ed25519CryptoEngine{},
 	&Ed25519CryptoEngine{},

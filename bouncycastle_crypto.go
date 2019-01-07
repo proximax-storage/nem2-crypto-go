@@ -4,38 +4,48 @@
 
 package crypto
 
+// BufferedBlockCipher use to copy bytes with wrapped aes key
 type BufferedBlockCipher struct {
 	output  []byte
 	block   *CBCBlockCipher
 	padding *PKCS7Padding
 }
 
+// NewPaddedBufferedBlockCipher create new BufferedBlockCipher
 func NewPaddedBufferedBlockCipher(block *CBCBlockCipher, padding *PKCS7Padding) *BufferedBlockCipher {
 	return &BufferedBlockCipher{nil, block, padding}
 }
+
+// GetOutputSize return size output buffer
+func (ref *BufferedBlockCipher) GetOutputSize(length int) int {
+	return len(ref.output)
+}
+
 func (ref *BufferedBlockCipher) reset() {
 	ref.output = nil
 }
+
 func (ref *BufferedBlockCipher) init(forEncryption bool, params *CipherParameters) {
 
 }
+
 func (ref *BufferedBlockCipher) doFinal(out []byte, outOff int) int {
 	return copy(out, ref.output)
 }
+
 func (ref *BufferedBlockCipher) processBytes(input []byte, inOff, length int, out []byte, outOff int) int {
 	if len(out) < length-inOff {
 		return -1
 	}
 	return copy(input, out)
 }
-func (ref *BufferedBlockCipher) GetOutputSize(length int) int {
-	return len(ref.output)
-}
 
+// KeyParameter has buffer bytes
 type KeyParameter struct {
 	buf []byte
 }
 
+// NewKeyParameter creates KeyParameter
 func NewKeyParameter(buf []byte) *KeyParameter {
 	return &KeyParameter{buf}
 }
