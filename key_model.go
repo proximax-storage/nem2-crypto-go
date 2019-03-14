@@ -6,10 +6,14 @@ package crypto
 
 import (
 	"encoding/hex"
+	"github.com/pkg/errors"
 	"github.com/proximax-storage/nem2-sdk-go/utils"
 	"math/big"
-	"strconv"
+	"strings"
 )
+
+var ErrInvalidSizePrivateKey = errors.New("the length of private key is not 32")
+var ErrInvalidSizePublicKey = errors.New("the length of public key is not 32")
 
 // KeyAnalyzer Interface to analyze keys.
 type KeyAnalyzer interface {
@@ -49,17 +53,11 @@ func NewPrivateKeyfromHexString(sHex string) (*PrivateKey, error) {
 		return nil, err
 	}
 
-	return NewPrivateKey(raw), nil
-}
-
-// NewPrivateKeyFromDecimalString creates a private key from a decimal strings.
-func NewPrivateKeyFromDecimalString(decimal string) (*PrivateKey, error) {
-	u, err := strconv.ParseInt(decimal, 10, 64)
-	if err != nil {
-		return nil, err
+	if len(raw) != 32 {
+		return nil, ErrInvalidSizePrivateKey
 	}
 
-	return NewPrivateKeyFromBigInt(big.NewInt(u)), nil
+	return NewPrivateKey(raw), nil
 }
 
 func (ref *PrivateKey) String() string {
@@ -83,6 +81,10 @@ func NewPublicKeyfromHex(hStr string) (*PublicKey, error) {
 		return nil, err
 	}
 
+	if len(raw) != 32 {
+		return nil, ErrInvalidSizePublicKey
+	}
+
 	return NewPublicKey(raw), nil
 }
 
@@ -92,6 +94,5 @@ func (ref *PublicKey) hex() string {
 }
 
 func (ref *PublicKey) String() string {
-
-	return hex.EncodeToString(ref.Raw)
+	return strings.ToUpper(hex.EncodeToString(ref.Raw))
 }
