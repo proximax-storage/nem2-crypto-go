@@ -5,10 +5,33 @@
 package crypto
 
 import (
+	"crypto/sha256"
 	"crypto/subtle"
 	"golang.org/x/crypto/ripemd160"
 	"golang.org/x/crypto/sha3"
 )
+
+// HashesSha_256 return Sha 256 hash of byte
+func HashesSha_256(b []byte) ([]byte, error) {
+	hash := sha256.New()
+	_, err := hash.Write(b)
+	if err != nil {
+		return nil, err
+	}
+
+	return hash.Sum(nil), nil
+}
+
+// HashesKeccak_256 return Keccak 256 hash of byte
+func HashesKeccak_256(b []byte) ([]byte, error) {
+	hash := sha3.NewLegacyKeccak256()
+	_, err := hash.Write(b)
+	if err != nil {
+		return nil, err
+	}
+
+	return hash.Sum(nil), nil
+}
 
 // HashesSha3_256 return sha3 256 hash of byte
 func HashesSha3_256(b []byte) ([]byte, error) {
