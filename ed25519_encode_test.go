@@ -41,7 +41,7 @@ func TestEd25519FieldElement_GetRawReturnsUnderlyingArray(t *testing.T) {
 	values[8] = -67
 	f := NewEd25519FieldElement(values)
 
-	assert.Equal(t, values[:], f.Raw, `values and f.GetRaw() must by equal !`)
+	assert.Equal(t, values, f.Raw, `values and f.GetRaw() must by equal !`)
 }
 
 // TestAddReturnsCorrectResult test Ed25519FieldElement summaring corection

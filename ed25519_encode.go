@@ -66,13 +66,6 @@ func Ed25519FieldDTimesTwo() *Ed25519FieldElement {
 	return &Ed25519FieldElement{d2}
 }
 
-// this method replace on three methods for one base constant
-//func getFieldElement(value intRaw) Ed25519FieldElement {
-//
-//	f := make(FieldElements, 10)
-//	f[0] = value
-//	return Ed25519FieldElement{f}
-//}
 // Ed25519FieldZero one of based element
 func Ed25519FieldZero() *Ed25519FieldElement {
 	return &Ed25519FieldElement{FieldElements{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}
