@@ -6,9 +6,6 @@ package crypto
 
 // CryptoEngine represents a cryptographic engine that is a factory of crypto-providers.
 type CryptoEngine interface {
-
-	// Return The underlying curve.
-	GetCurve() Curve
 	// Creates a DSA signer.
 	CreateDsaSigner(keyPair *KeyPair) DsaSigner
 	// Creates a key generator.
@@ -21,12 +18,12 @@ type CryptoEngine interface {
 
 // cryptoEngines Static class that exposes crypto engines.
 type cryptoEngines struct {
-	Ed25519Engine *Ed25519CryptoEngine
-	DefaultEngine *Ed25519CryptoEngine
+	Ed25519Engine *Ed25519SeedCryptoEngine
+	DefaultEngine *Ed25519SeedCryptoEngine
 }
 
 // CryptoEngines has cryptographic engines
 var CryptoEngines = cryptoEngines{
-	&Ed25519CryptoEngine{},
-	&Ed25519CryptoEngine{},
+	&Ed25519SeedCryptoEngine{nil},
+	&Ed25519SeedCryptoEngine{nil},
 }

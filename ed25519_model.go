@@ -5,46 +5,36 @@
 package crypto
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/rand"
-	rand2 "crypto/rand"
 	"errors"
 	"fmt"
 	"io"
-	"math/big"
 )
 
-//Ed25519CryptoEngine wraps a cryptographic engine ed25519
-type Ed25519CryptoEngine struct {
-}
-
-// GetCurve implemented interface CryptoEngine method
-func (ref *Ed25519CryptoEngine) GetCurve() Curve {
-
-	return Ed25519Curve
-
+//Ed25519SeedCryptoEngine wraps a cryptographic engine ed25519 and seed for this engine
+type Ed25519SeedCryptoEngine struct {
+	seed io.Reader
 }
 
 // CreateDsaSigner implemented interface CryptoEngine method
-func (ref *Ed25519CryptoEngine) CreateDsaSigner(keyPair *KeyPair) DsaSigner {
-
+func (ref *Ed25519SeedCryptoEngine) CreateDsaSigner(keyPair *KeyPair) DsaSigner {
 	return NewEd25519DsaSigner(keyPair)
 }
 
 // CreateKeyGenerator implemented interface CryptoEngine method
-func (ref *Ed25519CryptoEngine) CreateKeyGenerator() KeyGenerator {
-
-	return NewEd25519KeyGenerator()
+func (ref *Ed25519SeedCryptoEngine) CreateKeyGenerator() KeyGenerator {
+	return NewEd25519KeyGenerator(ref.seed)
 }
 
 // CreateBlockCipher implemented interface CryptoEngine method
-func (ref *Ed25519CryptoEngine) CreateBlockCipher(senderKeyPair *KeyPair, recipientKeyPair *KeyPair) BlockCipher {
-
-	return NewEd25519BlockCipher(senderKeyPair, recipientKeyPair)
+func (ref *Ed25519SeedCryptoEngine) CreateBlockCipher(senderKeyPair *KeyPair, recipientKeyPair *KeyPair) BlockCipher {
+	return NewEd25519BlockCipher(senderKeyPair, recipientKeyPair, ref.seed)
 }
 
 // CreateKeyAnalyzer implemented interface CryptoEngine method
-func (ref *Ed25519CryptoEngine) CreateKeyAnalyzer() KeyAnalyzer {
-
+func (ref *Ed25519SeedCryptoEngine) CreateKeyAnalyzer() KeyAnalyzer {
 	return NewEd25519KeyAnalyzer()
 }
 
@@ -53,33 +43,77 @@ type Ed25519BlockCipher struct {
 	senderKeyPair    *KeyPair
 	recipientKeyPair *KeyPair
 	keyLength        int
+	seed             io.Reader
 }
 
 // NewEd25519BlockCipher return Ed25519BlockCipher
-func NewEd25519BlockCipher(senderKeyPair *KeyPair, recipientKeyPair *KeyPair) *Ed25519BlockCipher {
-	ref := &Ed25519BlockCipher{
+func NewEd25519BlockCipher(senderKeyPair *KeyPair, recipientKeyPair *KeyPair, seed io.Reader) *Ed25519BlockCipher {
+	if seed == nil {
+		seed = rand.Reader
+	}
+
+	ref := Ed25519BlockCipher{
 		senderKeyPair,
 		recipientKeyPair,
 		len(recipientKeyPair.PublicKey.Raw),
+		seed,
 	}
-	return ref
+	return &ref
 }
 
-//todo: change methods
-// today he use java library - I use dummy struct instead
-func (ref *Ed25519BlockCipher) setupBlockCipher(sharedKey []byte, ivData []byte, forEncryption bool) *BufferedBlockCipher {
+func (ref *Ed25519BlockCipher) encode(message []byte, sharedKey []byte, ivData []byte) ([]byte, error) {
+	c, err := aes.NewCipher(sharedKey)
 
-	// Setup cipher parameters with key and IV.
-	keyParam := NewKeyParameter(sharedKey) //
-	params := NewParametersWithIV(keyParam, ivData)
-	//
-	// Setup AES cipher in CBC mode with PKCS7 padding.
-	padding := NewPKCS7Padding()
-	//
-	cipher := NewPaddedBufferedBlockCipher(NewCBCBlockCipher(NewAESEngine()), padding) //
-	cipher.reset()
-	cipher.init(forEncryption, params)
-	return cipher
+	if err != nil {
+		return nil, err
+	}
+
+	messageSize := len(message)
+	blockSize := c.BlockSize()
+	paddingSize := blockSize - (messageSize % blockSize)
+	bufferSize := messageSize + paddingSize
+
+	buf := make([]byte, bufferSize)
+	copy(buf[:messageSize], message)
+
+	for i := 0; i < paddingSize; i++ {
+		buf[messageSize+i] = uint8(paddingSize)
+	}
+
+	enc := cipher.NewCBCEncrypter(c, ivData)
+	ciphertext := make([]byte, len(buf))
+	enc.CryptBlocks(ciphertext, buf)
+
+	return ciphertext, nil
+}
+
+func (ref *Ed25519BlockCipher) decode(ciphertext []byte, sharedKey []byte, ivData []byte) ([]byte, error) {
+	c, err := aes.NewCipher(sharedKey)
+
+	if err != nil {
+		return nil, err
+	}
+
+	dec := cipher.NewCBCDecrypter(c, ivData)
+	buf := make([]byte, len(ciphertext))
+	dec.CryptBlocks(buf, ciphertext)
+
+	bufferSize := len(buf)
+	paddingSize := int(buf[bufferSize-1] & 0xFF)
+
+	if paddingSize == 0 || paddingSize > c.BlockSize() {
+		return nil, errors.New("blocks are corrupted, paddingSize is wrong")
+	}
+
+	messageSize := bufferSize - paddingSize
+
+	for i := messageSize; i < bufferSize; i++ {
+		if int(buf[i]) != paddingSize {
+			return nil, errors.New("blocks are corrupted, fake byte is not equal to paddingSize")
+		}
+	}
+
+	return buf[:messageSize], nil
 }
 
 // GetSharedKey create shared bytes
@@ -110,47 +144,40 @@ func (ref *Ed25519BlockCipher) GetSharedKey(privateKey *PrivateKey, publicKey *P
 }
 
 // Encrypt slice byte
-func (ref *Ed25519BlockCipher) Encrypt(input []byte) []byte {
-
+func (ref *Ed25519BlockCipher) Encrypt(input []byte) ([]byte, error) {
 	// Setup salt.
 	salt := make([]byte, ref.keyLength)
-	_, err := io.ReadFull(rand.Reader, salt)
+	_, err := io.ReadFull(ref.seed, salt)
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		return nil, err
 	}
+
 	// Derive shared key.
 	sharedKey, err := ref.GetSharedKey(ref.senderKeyPair.PrivateKey, ref.recipientKeyPair.PublicKey, salt)
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		return nil, err
 	}
 	// Setup IV.
 	ivData := make([]byte, 16)
-	_, err = io.ReadFull(rand.Reader, ivData)
+	_, err = io.ReadFull(ref.seed, ivData)
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		return nil, err
 	}
-	// Setup block cipher.
-	cipher := ref.setupBlockCipher(sharedKey, ivData, true)
 	// Encode.
-	buf := ref.transform(cipher, input)
-	if nil == buf {
-		fmt.Println(err)
-		return nil
+	buf, err := ref.encode(input, sharedKey, ivData)
+	if err != nil {
+		return nil, err
 	}
 
 	result := append(append(salt, ivData...), buf...)
 
-	return result
+	return result, nil
 }
 
 // Decrypt slice byte
-func (ref *Ed25519BlockCipher) Decrypt(input []byte) []byte {
-
+func (ref *Ed25519BlockCipher) Decrypt(input []byte) ([]byte, error) {
 	if len(input) < 64 {
-		return nil
+		return nil, errors.New("input is to short for decryption")
 	}
 
 	salt := input[:ref.keyLength]
@@ -159,22 +186,10 @@ func (ref *Ed25519BlockCipher) Decrypt(input []byte) []byte {
 	// Derive shared key.
 	sharedKey, err := ref.GetSharedKey(ref.recipientKeyPair.PrivateKey, ref.senderKeyPair.PublicKey, salt)
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		return nil, err
 	}
-	// Setup block cipher.
-	cipher := ref.setupBlockCipher(sharedKey, ivData, false)
 	// Decode.
-	return ref.transform(cipher, encData)
-}
-
-func (ref *Ed25519BlockCipher) transform(cipher *BufferedBlockCipher, data []byte) []byte {
-
-	buf := make([]byte, cipher.GetOutputSize(len(data)))
-	length := cipher.processBytes(data, 0, len(data), buf, 0)
-	length += cipher.doFinal(buf, length)
-
-	return buf
+	return ref.decode(encData, sharedKey, ivData)
 }
 
 // Ed25519DsaSigner implement DsaSigned interface with Ed25519 algo
@@ -326,38 +341,25 @@ func (ref *Ed25519DsaSigner) MakeSignatureCanonical(signature *Signature) (*Sign
 	return NewSignature(signature.R, sModQ.Raw)
 }
 
-//ed25519Curve Class that wraps the elliptic curve Ed25519.
-type ed25519Curve struct {
-}
-
-var Ed25519Curve = &ed25519Curve{}
-
-func (ref *ed25519Curve) GetName() string {
-	return "Ed25519Curve"
-}
-func (ref *ed25519Curve) GetGroupOrder() *big.Int {
-	return Ed25519Group.GROUP_ORDER
-}
-
-func (ref *ed25519Curve) GetHalfGroupOrder() uint64 {
-	return Ed25519Group.GROUP_ORDER.Uint64() >> 1
-}
-
 //Ed25519KeyGenerator Implementation of the key generator for Ed25519.
 type Ed25519KeyGenerator struct {
+	seed io.Reader
 }
 
 // NewEd25519KeyGenerator return new Ed25519KeyGenerator
-func NewEd25519KeyGenerator() *Ed25519KeyGenerator {
-	return &Ed25519KeyGenerator{}
+func NewEd25519KeyGenerator(seed io.Reader) *Ed25519KeyGenerator {
+	if seed == nil {
+		seed = rand.Reader
+	}
+
+	ref := Ed25519KeyGenerator{seed}
+	return &ref
 }
 
 // GenerateKeyPair generate key pair use ed25519.GenerateKey
 func (ref *Ed25519KeyGenerator) GenerateKeyPair() (*KeyPair, error) {
-
 	seed := make([]byte, 32)
-	rand := rand2.Reader
-	_, err := io.ReadFull(rand, seed[:])
+	_, err := io.ReadFull(ref.seed, seed[:])
 	if err != nil {
 		return nil, err
 	} // seed is the private key.
