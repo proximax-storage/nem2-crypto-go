@@ -4,49 +4,21 @@
 
 package crypto
 
-// Cipher Wraps IES encryption and decryption logic.
-type Cipher struct {
-	cipher BlockCipher
-}
-
-// NewCipher creates a cipher around a sender KeyPair and recipient KeyPair.
-// if engine not present - use CryptoEngines.DefaultEngine insend
+// NewBlockCipher creates a block cipher around a sender KeyPair and recipient KeyPair.
+// if engine is nil - use CryptoEngines.DefaultEngine instead
 // The sender KeyPair. The sender'S private key is required for encryption.
 // The recipient KeyPair. The recipient'S private key is required for decryption.
-func NewCipher(senderKeyPair *KeyPair, recipientKeyPair *KeyPair, engine CryptoEngine) *Cipher {
+func NewBlockCipher(senderKeyPair *KeyPair, recipientKeyPair *KeyPair, engine CryptoEngine) BlockCipher {
 	if engine == nil {
 		engine = CryptoEngines.DefaultEngine
 	}
-	ref := &Cipher{
-		engine.CreateBlockCipher(senderKeyPair, recipientKeyPair),
-	}
-	return ref
-}
-
-// NewCipherFromCipher creates a cipher around a cipher.
-func NewCipherFromCipher(cipher BlockCipher) *Cipher {
-	return &Cipher{
-		cipher,
-	}
-}
-
-// Encrypt  an arbitrarily-sized message (input)
-func (ref *Cipher) Encrypt(input []byte) []byte {
-
-	return ref.cipher.Encrypt(input)
-}
-
-// Decrypt  an arbitrarily-sized message.
-//return The decrypted message or nil if decryption failed.
-func (ref *Cipher) Decrypt(input []byte) []byte {
-
-	return ref.cipher.Decrypt(input)
+	return engine.CreateBlockCipher(senderKeyPair, recipientKeyPair)
 }
 
 // BlockCipher Interface for encryption and decryption of data.
 type BlockCipher interface {
 	// Encrypts an arbitrarily-sized message (input).
-	Encrypt(input []byte) []byte
+	Encrypt(input []byte) ([]byte, error)
 	// Decrypts an arbitrarily-sized message.
-	Decrypt(input []byte) []byte
+	Decrypt(input []byte) ([]byte, error)
 }

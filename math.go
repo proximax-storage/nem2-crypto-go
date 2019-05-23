@@ -83,7 +83,7 @@ func (ref *mathUtils) FieldToBigInteger(f *Ed25519FieldElement) *big.Int {
 //     *
 //     * @param t The 2^25.5 bit representation.
 //     * @return The BigInteger.
-func (ref *mathUtils) IntsToBigInteger(t []intRaw) *big.Int {
+func (ref *mathUtils) IntsToBigInteger(t FieldElements) *big.Int {
 	b := bigIntegerZERO()
 	for i, val := range t {
 		el := (&big.Int{}).SetInt64(int64(val))
@@ -97,7 +97,7 @@ func (ref *mathUtils) IntsToBigInteger(t []intRaw) *big.Int {
 
 func (ref *mathUtils) GetRandomFieldElement() Ed25519FieldElement {
 
-	t := make([]intRaw, 10)
+	var t FieldElements
 	rand := rand2.Reader
 
 	for j := range t {
@@ -426,7 +426,7 @@ func (ref *mathUtils) GetRandomByteArray(length int) []byte {
 	return bytes
 }
 
-func (ref *mathUtils) GetRandomIntRaw() intRaw {
+func (ref *mathUtils) GetRandomInt64() int64 {
 
 	bytes := make([]byte, 8)
 	rand := rand2.Reader

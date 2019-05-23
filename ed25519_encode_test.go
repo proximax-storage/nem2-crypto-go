@@ -17,43 +17,31 @@ const numIter = 1000
 
 // region Ed25519FieldElement
 
-// TestNewEd25519FieldElement test correct length raw checking
-func TestNewEd25519FieldElement(t *testing.T) {
-	for i := 0; i < 100; i++ {
-		_, err := NewEd25519FieldElement(make([]intRaw, i))
-		if i == lenEd25519FieldElementRaw {
-			assert.Nil(t, err)
-		} else {
-			assert.NotNil(t, err)
-		}
-	}
-
-}
 func TestIsNonZeroReturnsFalseIfFieldElementIsZero(t *testing.T) {
 
-	test := [10]intRaw{}
-	f, _ := NewEd25519FieldElement(test[:])
+	var test FieldElements
+	f := NewEd25519FieldElement(test)
 
 	assert.Equal(t, false, f.IsNonZero(), `f.isNonZero() must be false!`)
 }
 
 func TestIsNonZeroReturnsTrueIfFieldElementIsNonZero(t *testing.T) {
 
-	test := [10]intRaw{}
+	var test FieldElements
 	test[0] = 5
-	f, _ := NewEd25519FieldElement(test[:])
+	f := NewEd25519FieldElement(test)
 
 	assert.Equal(t, true, f.IsNonZero(), `f.isNonZero() must be true!`)
 }
 func TestEd25519FieldElement_GetRawReturnsUnderlyingArray(t *testing.T) {
 
-	values := [10]intRaw{}
+	var values FieldElements
 	values[0] = 5
 	values[6] = 15
 	values[8] = -67
-	f, _ := NewEd25519FieldElement(values[:])
+	f := NewEd25519FieldElement(values)
 
-	assert.Equal(t, values[:], f.Raw, `values and f.GetRaw() must by equal !`)
+	assert.Equal(t, values, f.Raw, `values and f.GetRaw() must by equal !`)
 }
 
 // TestAddReturnsCorrectResult test Ed25519FieldElement summaring corection
@@ -130,10 +118,10 @@ func TestEd25519FieldMultiply_Mirror(t *testing.T) {
 	}
 }
 func TestEd25519FieldElement_Muiltiply(t *testing.T) {
-	raw := make([]intRaw, lenEd25519FieldElementRaw)
+	var raw FieldElements
 	for i := 0; i < numIter; i++ {
-		for j := 0; j < lenEd25519FieldElementRaw; j++ {
-			raw[j] = intRaw(i+1) - (1 << 24)
+		for j, _ := range raw {
+			raw[j] = int64(i+1) - (1 << 24)
 			f1 := Ed25519FieldElement{raw}
 			f2 := MathUtils.GetRandomFieldElement()
 			f3 := f1.multiply(f2)
@@ -248,8 +236,8 @@ func TestEd25519EncodedFieldElement_MultiplyAndAddModQReturnsExpectedResult(t *t
 
 func TestEd25519FieldElementEncode_ReturnsCorrectByteArrayForSimpleFieldElements(t *testing.T) {
 
-	t1 := make([]intRaw, 10)
-	t2 := make([]intRaw, 10)
+	var t1 FieldElements
+	var t2 FieldElements
 	t2[0] = 1
 	fieldElement1 := &Ed25519FieldElement{t1}
 
@@ -270,11 +258,10 @@ func TestEncodeReturnsCorrectByteArrayIfJthBitOfTiIsSetToOne(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 
-		test := make([]intRaw, 10)
+		var test FieldElements
 		for j := uint(0); j < 24; j++ {
 			test[i] = 1 << j
-			fieldElement, err := NewEd25519FieldElement(test)
-			assert.Nil(t, err)
+			fieldElement := NewEd25519FieldElement(test)
 			b := MathUtils.IntsToBigInteger(test)
 			b.Mod(b, Ed25519Field.P)
 			// Act:
@@ -292,14 +279,13 @@ func TestEncodeReturnsCorrectByteArray(t *testing.T) {
 
 	for i := 0; i < numIter; i++ {
 
-		test := make([]intRaw, 10)
+		var test FieldElements
 		for j := uint(0); j < 10; j++ {
 			//random.nextInt(1 << 28) - (1 << 27);
-			test[j] = MathUtils.GetRandomIntRaw() - (1 << 27)
+			test[j] = MathUtils.GetRandomInt64() - (1 << 27)
 		}
 
-		fieldElement, err := NewEd25519FieldElement(test)
-		assert.Nil(t, err)
+		fieldElement := NewEd25519FieldElement(test)
 		b := MathUtils.IntsToBigInteger(test)
 		encoded := fieldElement.Encode()
 		// Assert:

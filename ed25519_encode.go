@@ -57,32 +57,23 @@ const ed25519FieldI = "b0a00e4a271beec478e42fad0618432fa7d7fb3d99004d2b0bdfc14f8
 // Ed25519FieldD  one of based element
 func Ed25519FieldD() *Ed25519FieldElement {
 
-	return &Ed25519FieldElement{[]intRaw{
-		-10913610, 13857413, -15372611, 6949391, 114729, -8787816, -6275908, -3247719, -18696448, -12055116,
-	}}
+	return &Ed25519FieldElement{d}
 }
 
 // Ed25519FieldDTimesTwo one of based element
 func Ed25519FieldDTimesTwo() *Ed25519FieldElement {
 	// return getD().multiply(*(Ed25519FieldTWO())),
-	return &Ed25519FieldElement{[]intRaw{-21827239, -5839606, -30745221, 13898782, 229458, 15978800, -12551817, -6495438, 29715968, 9444199}}
+	return &Ed25519FieldElement{d2}
 }
 
-// this method replace on three methods for one base constant
-//func getFieldElement(value intRaw) Ed25519FieldElement {
-//
-//	f := make([]intRaw, 10)
-//	f[0] = value
-//	return Ed25519FieldElement{f}
-//}
 // Ed25519FieldZero one of based element
 func Ed25519FieldZero() *Ed25519FieldElement {
-	return &Ed25519FieldElement{[]intRaw{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}
+	return &Ed25519FieldElement{FieldElements{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}
 }
 
 // Ed25519FieldOne one of based element
 func Ed25519FieldOne() *Ed25519FieldElement {
-	return &Ed25519FieldElement{[]intRaw{1, 0, 0, 0, 0, 0, 0, 0, 0, 0}}
+	return &Ed25519FieldElement{FieldElements{1, 0, 0, 0, 0, 0, 0, 0, 0, 0}}
 }
 
 // Ed25519FieldZeroShort one of based element
@@ -97,7 +88,7 @@ func Ed25519FieldZeroLong() []byte {
 
 // Ed25519FieldTWO one of based element
 func Ed25519FieldTWO() *Ed25519FieldElement {
-	return &Ed25519FieldElement{[]intRaw{2, 0, 0, 0, 0, 0, 0, 0, 0, 0}}
+	return &Ed25519FieldElement{FieldElements{2, 0, 0, 0, 0, 0, 0, 0, 0, 0}}
 }
 
 // Ed25519FieldP: 2^255 - 19
@@ -120,9 +111,7 @@ var Ed25519Field = ed25519Field{
 	*((&Ed25519EncodedFieldElement{Ed25519FieldZeroShort(), utils.MustHexDecodeString(ed25519FieldI)}).Decode()),
 }
 
-type intRaw = int64
-
-const lenEd25519FieldElementRaw = 10
+type FieldElements = [10]int64
 
 // Ed25519FieldElement Represents a element of the finite field with p=2^255-19 elements.
 // Raw[0] ... Raw[9], represent the integer
@@ -130,16 +119,13 @@ const lenEd25519FieldElementRaw = 10
 // Bounds on each Raw[i] vary depending on context.
 // This implementation is based on the ref10 implementation of SUPERCOP.
 type Ed25519FieldElement struct {
-	Raw []intRaw
+	Raw FieldElements
 }
 
 // NewEd25519FieldElement Creates a field element.
 // Raw The 2^25.5 bit representation of the field element.
-func NewEd25519FieldElement(Raw []intRaw) (*Ed25519FieldElement, error) {
-	if len(Raw) != lenEd25519FieldElementRaw {
-		return nil, errors.New("Invalid 2^25.5 bit representation.")
-	}
-	return &Ed25519FieldElement{Raw}, nil
+func NewEd25519FieldElement(Raw FieldElements) *Ed25519FieldElement {
+	return &Ed25519FieldElement{Raw}
 }
 
 // Ed25519FieldElementSqrt Calculates and returns one of the square roots of u / v.
@@ -183,7 +169,7 @@ func (ref Ed25519FieldElement) IsNonZero() bool {
  * @return The field element ref + val.
  */
 func (ref Ed25519FieldElement) add(g Ed25519FieldElement) Ed25519FieldElement {
-	h := make([]intRaw, 10)
+	var h FieldElements
 	for i := range h {
 		h[i] = ref.Raw[i] + g.Raw[i]
 	}
@@ -204,7 +190,7 @@ func (ref Ed25519FieldElement) add(g Ed25519FieldElement) Ed25519FieldElement {
  * @param g The field element to subtract.
  * @return The field element ref - val.
  */func (ref Ed25519FieldElement) subtract(g Ed25519FieldElement) Ed25519FieldElement {
-	h := make([]intRaw, 10)
+	var h FieldElements
 	for i := range h {
 		h[i] = ref.Raw[i] - g.Raw[i]
 	}
@@ -224,8 +210,7 @@ func (ref Ed25519FieldElement) add(g Ed25519FieldElement) Ed25519FieldElement {
  *
  * @return The field element (-1) * ref.
  */func (ref Ed25519FieldElement) negate() Ed25519FieldElement {
-
-	h := make([]intRaw, 10)
+	var h FieldElements
 	for i := range h {
 		h[i] = -ref.Raw[i]
 	}
@@ -389,7 +374,7 @@ func (ref Ed25519FieldElement) add(g Ed25519FieldElement) Ed25519FieldElement {
 	 * f2 * g8 really is f2 * 2^51 * g8 * 2^204 = f2 * g8 * 2^255 congruent 19 * f2 * g8 * 2^0 modulo p.
 	 * and so on...
 	 */
-	h := []intRaw{
+	h := FieldElements{
 		f0g0 + f1g9_38 + f2g8_19 + f3g7_38 + f4g6_19 + f5g5_38 + f6g4_19 + f7g3_38 + f8g2_19 + f9g1_38,
 		f0g1 + f1g0 + f2g9_19 + f3g8_19 + f4g7_19 + f5g6_19 + f6g5_19 + f7g4_19 + f8g3_19 + f9g2_19,
 		f0g2 + f1g1_2 + f2g0 + f3g9_38 + f4g8_19 + f5g7_38 + f6g6_19 + f7g5_38 + f8g4_19 + f9g3_38,
@@ -598,7 +583,7 @@ func (ref Ed25519FieldElement) square() Ed25519FieldElement {
 	f8f9_38 := ref.Raw[8] * f9_38
 	f9f9_38 := ref.Raw[9] * f9_38
 
-	var h [10]intRaw
+	var h FieldElements
 	h[0] = f0f0 + f1f9_76 + f2f8_38 + f3f7_76 + f4f6_38 + f5f5_38
 	h[1] = f0f1_2 + f2f9_38 + f3f8_38 + f4f7_38 + f5f6_38
 	h[2] = f0f2_2 + f1f1_2 + f3f9_76 + f4f8_38 + f5f7_76 + f6f6_19
@@ -651,7 +636,8 @@ func (ref Ed25519FieldElement) square() Ed25519FieldElement {
 	carry0 = (h[0] + (1 << 25)) >> 26
 	h[1] += carry0
 	h[0] -= carry0 << 26
-	return Ed25519FieldElement{h[:]}
+
+	return Ed25519FieldElement{h}
 }
 
 /**
@@ -808,18 +794,7 @@ func (ref Ed25519FieldElement) pow2to252sub4() Ed25519FieldElement {
  * @return The mod p reduced field element
  */func (ref Ed25519FieldElement) modP() Ed25519FieldElement {
 
-	h := []intRaw{
-		ref.Raw[0],
-		ref.Raw[1],
-		ref.Raw[2],
-		ref.Raw[3],
-		ref.Raw[4],
-		ref.Raw[5],
-		ref.Raw[6],
-		ref.Raw[7],
-		ref.Raw[8],
-		ref.Raw[9],
-	}
+	h := ref.Raw
 	// Calculate q
 	q := (19*h[9] + (1 << 24)) >> 25
 	q = (h[0] + q) >> 26
@@ -968,14 +943,19 @@ func (ref *Ed25519EncodedFieldElement) Equals(ge *Ed25519EncodedFieldElement) bo
 	return isEqualConstantTime(ref.Raw, ge.Raw)
 }
 
-func (ref *Ed25519EncodedFieldElement) threeBytesToLong(b []byte, offset int) intRaw {
-
-	return intRaw(int64(b[offset]) | int64(b[offset+1])<<8 | int64(b[offset+2])<<16)
+func (ref *Ed25519EncodedFieldElement) threeBytesToLong(b []byte, offset int) int64 {
+	result := int64(b[offset]) & 0xFF
+	result |= (int64(b[offset+1]) & 0xFF) << 8
+	result |= (int64(b[offset+2]) & 0xFF) << 16
+	return result
 }
 
-func (ref *Ed25519EncodedFieldElement) fourBytesToLong(b []byte, offset int) intRaw {
-
-	return intRaw(int64(b[offset]) | int64(b[offset+1])<<8 | int64(b[offset+2])<<16 | int64(b[offset+3])<<24)
+func (ref *Ed25519EncodedFieldElement) fourBytesToLong(b []byte, offset int) int64 {
+	result := int64(b[offset]) & 0xFF
+	result |= (int64(b[offset+1]) & 0xFF) << 8
+	result |= (int64(b[offset+2]) & 0xFF) << 16
+	result |= (int64(b[offset+3]) & 0xFF) << 24
+	return result & 0xFFFFFFFF
 }
 
 // IsNegative return true if ref is in {1,3,5,...,q-2}
@@ -1007,7 +987,7 @@ func (ref *Ed25519EncodedFieldElement) IsNonZero() bool {
  */
 func (ref *Ed25519EncodedFieldElement) Decode() *Ed25519FieldElement {
 
-	h := []intRaw{
+	h := FieldElements{
 		ref.fourBytesToLong(ref.Raw, 0),
 		ref.threeBytesToLong(ref.Raw, 4) << 6,
 		ref.threeBytesToLong(ref.Raw, 7) << 5,
@@ -1484,7 +1464,7 @@ func (ref *Ed25519EncodedFieldElement) multiplyAndAddModQ(
 	s20 := a9*b11 + a10*b10 + a11*b9
 	s21 := a10*b11 + a11*b10
 	s22 := a11 * b11
-	s23 := intRaw(0)
+	s23 := int64(0)
 	carry0 := (s0 + (1 << 20)) >> 21
 	s1 += carry0
 	s0 -= carry0 << 21
