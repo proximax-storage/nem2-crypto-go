@@ -9,7 +9,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/proximax-storage/nem2-sdk-go/utils"
+	"github.com/proximax-storage/go-xpx-utils"
 	"math/big"
 )
 
