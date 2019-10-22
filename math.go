@@ -8,7 +8,7 @@ import (
 	rand2 "crypto/rand"
 	"encoding/binary"
 	"errors"
-	"github.com/proximax-storage/nem2-sdk-go/utils"
+	"github.com/proximax-storage/go-xpx-utils"
 	"io"
 	"math/big"
 )
