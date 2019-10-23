@@ -6,7 +6,7 @@ package crypto
 
 import (
 	"fmt"
-	"github.com/proximax-storage/nem2-sdk-go/utils"
+	"github.com/proximax-storage/go-xpx-utils"
 	"github.com/stretchr/testify/assert"
 	"math/big"
 	"runtime"
