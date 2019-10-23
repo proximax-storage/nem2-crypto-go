@@ -1,4 +1,4 @@
-module github.com/proximax-storage/xpx-crypto-go
+module github.com/proximax-storage/go-xpx-crypto
 
 go 1.12
 
