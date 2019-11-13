@@ -13,7 +13,7 @@ import (
 	"io"
 )
 
-//Ed25519SeedCryptoEngine wraps a cryptographic engine ed25519 and seed for this engine
+// Ed25519SeedCryptoEngine wraps a cryptographic engine ed25519 and seed for this engine
 type Ed25519SeedCryptoEngine struct {
 	seed io.Reader
 }
@@ -197,7 +197,7 @@ type Ed25519DsaSigner struct {
 	KeyPair *KeyPair
 }
 
-//NewEd25519DsaSigner creates a Ed25519 DSA signer.
+// NewEd25519DsaSigner creates a Ed25519 DSA signer.
 func NewEd25519DsaSigner(keyPair *KeyPair) *Ed25519DsaSigner {
 	return &Ed25519DsaSigner{keyPair}
 }
@@ -341,7 +341,7 @@ func (ref *Ed25519DsaSigner) MakeSignatureCanonical(signature *Signature) (*Sign
 	return NewSignature(signature.R, sModQ.Raw)
 }
 
-//Ed25519KeyGenerator Implementation of the key generator for Ed25519.
+// Ed25519KeyGenerator Implementation of the key generator for Ed25519.
 type Ed25519KeyGenerator struct {
 	seed io.Reader
 }

@@ -2,9 +2,10 @@ package crypto
 
 import (
 	"encoding/hex"
+	"testing"
+
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 const (

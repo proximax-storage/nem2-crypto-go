@@ -7,9 +7,10 @@ package crypto
 import (
 	"encoding/hex"
 	"errors"
-	"github.com/proximax-storage/go-xpx-utils"
 	"math"
 	"math/big"
+
+	"github.com/proximax-storage/go-xpx-utils"
 )
 
 // Signature include two part of signature
