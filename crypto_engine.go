@@ -10,7 +10,7 @@ type CryptoEngine interface {
 	CreateDsaSigner(keyPair *KeyPair) DsaSigner
 	// Creates a key generator.
 	CreateKeyGenerator() KeyGenerator
-	//Creates a block cipher.
+	// Creates a block cipher.
 	CreateBlockCipher(senderKeyPair *KeyPair, recipientKeyPair *KeyPair) BlockCipher
 	// Creates a key analyzer.
 	CreateKeyAnalyzer() KeyAnalyzer

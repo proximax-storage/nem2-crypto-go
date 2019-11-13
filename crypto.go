@@ -7,6 +7,7 @@ package crypto
 import (
 	"crypto/sha256"
 	"crypto/subtle"
+
 	"golang.org/x/crypto/ripemd160"
 	"golang.org/x/crypto/sha3"
 )
