@@ -5,9 +5,13 @@
 package crypto
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
+	"crypto/sha512"
 	"crypto/subtle"
+	"io"
 
+	"golang.org/x/crypto/hkdf"
 	"golang.org/x/crypto/ripemd160"
 	"golang.org/x/crypto/sha3"
 )
@@ -88,4 +92,60 @@ func isConstantTimeByteEq(b, c int) int {
 
 func isEqualConstantTime(x, y []byte) bool {
 	return subtle.ConstantTimeCompare(x, y) == 1
+}
+
+func Clamp(d *[]byte) {
+	(*d)[0] &= 248
+	(*d)[31] &= 127
+	(*d)[31] |= 64
+}
+func PrepareForScalarMult(sk []byte) []byte {
+	d := []byte{}
+	hash := sha512.Sum512_256(sk)
+	n := copy(d[0:32], hash[:])
+	if n != 32 {
+		panic("Invalid checksum copy!")
+	}
+	Clamp(&d)
+	return d
+}
+func deriveSharedSecret(privateKey []byte, publicKey []byte) [32]byte {
+	d := PrepareForScalarMult(privateKey)
+	// sharedKey = pack(p = d (derived from privateKey) * q (derived from publicKey))
+	q := [4][128]byte{gf(nil), gf(nil), gf(nil), gf(nil)}
+	p := [4][128]byte{gf(nil), gf(nil), gf(nil), gf(nil)}
+	sharedSecret := [32]byte{}
+	var keyCopy [32]byte
+	var d1 [32]byte
+	copy(d1[:], d)
+	copy(keyCopy[:], publicKey)
+	unpack(&q, keyCopy)
+	scalarmult(&p, &q, &d1)
+	pack(&sharedSecret, p)
+	return sharedSecret
+}
+
+func deriveSharedKey(privateKey []byte, publicKey []byte) []byte {
+	sharedSecret := deriveSharedSecret(privateKey, publicKey)
+	// Underlying hash function for HMAC.
+	hash := sha256.New
+
+	// Non-secret salt, optional (can be nil).
+	// Recommended: hash-length random value.
+	salt := make([]byte, hash().Size())
+	if _, err := rand.Read(salt); err != nil {
+		panic(err)
+	}
+
+	// Non-secret context info, optional (can be nil).
+	info := []byte("catapult")
+
+	// Generate three 128-bit derived keys.
+	hkdf := hkdf.New(hash, sharedSecret[:], salt, info)
+
+	key := make([]byte, 16)
+	if _, err := io.ReadFull(hkdf, key); err != nil {
+		panic(err)
+	}
+	return key
 }
