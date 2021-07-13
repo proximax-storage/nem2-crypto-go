@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -55,4 +56,29 @@ func TestHashesRipemd160(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, "3fc43d717d824302e3821de8129ea2f7786912e5", hex.EncodeToString(secretB))
+}
+
+func TestEncryptDecryptGCM(t *testing.T) {
+	sender, _ := NewRandomKeyPair()
+	recipient, _ := NewRandomKeyPair()
+	iv := MathUtils.GetRandomByteArray(12)
+	encoded, err := encodeMessage(*sender.PrivateKey, *recipient.PublicKey, "This is a random test message that must match forever and ever.", iv)
+	if err != nil {
+		panic(fmt.Sprintf("Unable to encode message: %s", err))
+	}
+	decoded, err := decodeMessage(*recipient.PrivateKey, *sender.PublicKey, encoded, iv)
+	if err != nil {
+		panic(fmt.Sprintf("Unable to decode message: %s", err))
+	}
+	fmt.Print(decoded)
+}
+
+func TestDerivedKeyCompat(t *testing.T) {
+	sender, _ := NewRandomKeyPair()
+	recipient, _ := NewRandomKeyPair()
+	sharedKey := deriveSharedKey(sender.PrivateKey.Raw, recipient.PublicKey.Raw)
+	sharedKey2 := deriveSharedKey(recipient.PrivateKey.Raw, sender.PublicKey.Raw)
+	fmt.Printf("a %x", sharedKey)
+	fmt.Printf("b %x", sharedKey2)
+	assert.Equal(t, sharedKey, sharedKey2)
 }

@@ -18,10 +18,6 @@
 
 package crypto
 
-import (
-	"encoding/binary"
-)
-
 func initNine() [32]byte {
 	val := [32]byte{}
 	val[0] = 9
@@ -33,12 +29,11 @@ var (
 	_9 = initNine()
 )
 
-func gf(init []int64) [16 * 8]byte {
-	r := [16 * 8]byte{}
+func gf(init []int64) [16]int64 {
+	r := [16]int64{}
 	if len(init) > 0 {
 		for i := 0; i < len(init); i++ {
-			b := r[(i * 8):(i*8 + 8)]
-			binary.LittleEndian.PutUint64(b, uint64(init[i]))
+			r[i] = init[i]
 		}
 	}
 	return r
@@ -175,69 +170,69 @@ var L = [...]int64{
 	0x10,
 }
 
-func B(o *[128]byte, a [128]byte, b [128]byte) {
+func B(o *[16]int64, a [16]int64, b [16]int64) {
 	for i := 0; i < 16; i++ {
-		binary.LittleEndian.PutUint64(o[i*8:i*8+8], binary.LittleEndian.Uint64(a[8*i:8*i+8])+binary.LittleEndian.Uint64(b[8*i:8*i+8]))
+		o[i] = a[i] + b[i]
 	}
 }
 
-func Z(o *[128]byte, a [128]byte, b [128]byte) {
+func Z(o *[16]int64, a [16]int64, b [16]int64) {
 	for i := 0; i < 16; i++ {
-		binary.LittleEndian.PutUint64(o[i*8:i*8+8], binary.LittleEndian.Uint64(a[8*i:8*i+8])-binary.LittleEndian.Uint64(b[8*i:8*i+8]))
+		o[i] = a[i] - b[i]
 	}
 }
 
-func M(o *[128]byte, a [128]byte, b [128]byte) {
-	v := uint64(0)
-	c := uint64(0)
-	t0 := uint64(0)
-	t1 := uint64(0)
-	t2 := uint64(0)
-	t3 := uint64(0)
-	t4 := uint64(0)
-	t5 := uint64(0)
-	t6 := uint64(0)
-	t7 := uint64(0)
-	t8 := uint64(0)
-	t9 := uint64(0)
-	t10 := uint64(0)
-	t11 := uint64(0)
-	t12 := uint64(0)
-	t13 := uint64(0)
-	t14 := uint64(0)
-	t15 := uint64(0)
-	t16 := uint64(0)
-	t17 := uint64(0)
-	t18 := uint64(0)
-	t19 := uint64(0)
-	t20 := uint64(0)
-	t21 := uint64(0)
-	t22 := uint64(0)
-	t23 := uint64(0)
-	t24 := uint64(0)
-	t25 := uint64(0)
-	t26 := uint64(0)
-	t27 := uint64(0)
-	t28 := uint64(0)
-	t29 := uint64(0)
-	t30 := uint64(0)
-	b0 := binary.LittleEndian.Uint64(b[0:8])
-	b1 := binary.LittleEndian.Uint64(b[8:16])
-	b2 := binary.LittleEndian.Uint64(b[16:24])
-	b3 := binary.LittleEndian.Uint64(b[24:32])
-	b4 := binary.LittleEndian.Uint64(b[32:40])
-	b5 := binary.LittleEndian.Uint64(b[40:48])
-	b6 := binary.LittleEndian.Uint64(b[48:56])
-	b7 := binary.LittleEndian.Uint64(b[56:64])
-	b8 := binary.LittleEndian.Uint64(b[64:72])
-	b9 := binary.LittleEndian.Uint64(b[72:80])
-	b10 := binary.LittleEndian.Uint64(b[80:88])
-	b11 := binary.LittleEndian.Uint64(b[88:96])
-	b12 := binary.LittleEndian.Uint64(b[96:104])
-	b13 := binary.LittleEndian.Uint64(b[104:112])
-	b14 := binary.LittleEndian.Uint64(b[112:120])
-	b15 := binary.LittleEndian.Uint64(b[120:])
-	v = binary.LittleEndian.Uint64(a[0:8])
+func M(o *[16]int64, a [16]int64, b [16]int64) {
+	v := int64(0)
+	c := int64(0)
+	t0 := int64(0)
+	t1 := int64(0)
+	t2 := int64(0)
+	t3 := int64(0)
+	t4 := int64(0)
+	t5 := int64(0)
+	t6 := int64(0)
+	t7 := int64(0)
+	t8 := int64(0)
+	t9 := int64(0)
+	t10 := int64(0)
+	t11 := int64(0)
+	t12 := int64(0)
+	t13 := int64(0)
+	t14 := int64(0)
+	t15 := int64(0)
+	t16 := int64(0)
+	t17 := int64(0)
+	t18 := int64(0)
+	t19 := int64(0)
+	t20 := int64(0)
+	t21 := int64(0)
+	t22 := int64(0)
+	t23 := int64(0)
+	t24 := int64(0)
+	t25 := int64(0)
+	t26 := int64(0)
+	t27 := int64(0)
+	t28 := int64(0)
+	t29 := int64(0)
+	t30 := int64(0)
+	b0 := b[0]
+	b1 := b[1]
+	b2 := b[2]
+	b3 := b[3]
+	b4 := b[4]
+	b5 := b[5]
+	b6 := b[6]
+	b7 := b[7]
+	b8 := b[8]
+	b9 := b[9]
+	b10 := b[10]
+	b11 := b[11]
+	b12 := b[12]
+	b13 := b[13]
+	b14 := b[14]
+	b15 := b[15]
+	v = a[0]
 	t0 += v * b0
 	t1 += v * b1
 	t2 += v * b2
@@ -254,7 +249,7 @@ func M(o *[128]byte, a [128]byte, b [128]byte) {
 	t13 += v * b13
 	t14 += v * b14
 	t15 += v * b15
-	v = binary.LittleEndian.Uint64(a[8:16])
+	v = a[1]
 	t1 += v * b0
 	t2 += v * b1
 	t3 += v * b2
@@ -271,7 +266,7 @@ func M(o *[128]byte, a [128]byte, b [128]byte) {
 	t14 += v * b13
 	t15 += v * b14
 	t16 += v * b15
-	v = binary.LittleEndian.Uint64(a[16:24])
+	v = a[2]
 	t2 += v * b0
 	t3 += v * b1
 	t4 += v * b2
@@ -288,7 +283,7 @@ func M(o *[128]byte, a [128]byte, b [128]byte) {
 	t15 += v * b13
 	t16 += v * b14
 	t17 += v * b15
-	v = binary.LittleEndian.Uint64(a[24:32])
+	v = a[3]
 	t3 += v * b0
 	t4 += v * b1
 	t5 += v * b2
@@ -305,7 +300,7 @@ func M(o *[128]byte, a [128]byte, b [128]byte) {
 	t16 += v * b13
 	t17 += v * b14
 	t18 += v * b15
-	v = binary.LittleEndian.Uint64(a[32:40])
+	v = a[4]
 	t4 += v * b0
 	t5 += v * b1
 	t6 += v * b2
@@ -322,7 +317,7 @@ func M(o *[128]byte, a [128]byte, b [128]byte) {
 	t17 += v * b13
 	t18 += v * b14
 	t19 += v * b15
-	v = binary.LittleEndian.Uint64(a[40:48])
+	v = a[5]
 	t5 += v * b0
 	t6 += v * b1
 	t7 += v * b2
@@ -339,7 +334,7 @@ func M(o *[128]byte, a [128]byte, b [128]byte) {
 	t18 += v * b13
 	t19 += v * b14
 	t20 += v * b15
-	v = binary.LittleEndian.Uint64(a[48:56])
+	v = a[6]
 	t6 += v * b0
 	t7 += v * b1
 	t8 += v * b2
@@ -356,7 +351,7 @@ func M(o *[128]byte, a [128]byte, b [128]byte) {
 	t19 += v * b13
 	t20 += v * b14
 	t21 += v * b15
-	v = binary.LittleEndian.Uint64(a[56:64])
+	v = a[7]
 	t7 += v * b0
 	t8 += v * b1
 	t9 += v * b2
@@ -373,7 +368,7 @@ func M(o *[128]byte, a [128]byte, b [128]byte) {
 	t20 += v * b13
 	t21 += v * b14
 	t22 += v * b15
-	v = binary.LittleEndian.Uint64(a[64:72])
+	v = a[8]
 	t8 += v * b0
 	t9 += v * b1
 	t10 += v * b2
@@ -390,7 +385,7 @@ func M(o *[128]byte, a [128]byte, b [128]byte) {
 	t21 += v * b13
 	t22 += v * b14
 	t23 += v * b15
-	v = binary.LittleEndian.Uint64(a[72:80])
+	v = a[9]
 	t9 += v * b0
 	t10 += v * b1
 	t11 += v * b2
@@ -407,7 +402,7 @@ func M(o *[128]byte, a [128]byte, b [128]byte) {
 	t22 += v * b13
 	t23 += v * b14
 	t24 += v * b15
-	v = binary.LittleEndian.Uint64(a[80:88])
+	v = a[10]
 	t10 += v * b0
 	t11 += v * b1
 	t12 += v * b2
@@ -424,7 +419,7 @@ func M(o *[128]byte, a [128]byte, b [128]byte) {
 	t23 += v * b13
 	t24 += v * b14
 	t25 += v * b15
-	v = binary.LittleEndian.Uint64(a[88:96])
+	v = a[11]
 	t11 += v * b0
 	t12 += v * b1
 	t13 += v * b2
@@ -441,7 +436,7 @@ func M(o *[128]byte, a [128]byte, b [128]byte) {
 	t24 += v * b13
 	t25 += v * b14
 	t26 += v * b15
-	v = binary.LittleEndian.Uint64(a[96:104])
+	v = a[12]
 	t12 += v * b0
 	t13 += v * b1
 	t14 += v * b2
@@ -458,7 +453,7 @@ func M(o *[128]byte, a [128]byte, b [128]byte) {
 	t25 += v * b13
 	t26 += v * b14
 	t27 += v * b15
-	v = binary.LittleEndian.Uint64(a[104:112])
+	v = a[13]
 	t13 += v * b0
 	t14 += v * b1
 	t15 += v * b2
@@ -475,7 +470,7 @@ func M(o *[128]byte, a [128]byte, b [128]byte) {
 	t26 += v * b13
 	t27 += v * b14
 	t28 += v * b15
-	v = binary.LittleEndian.Uint64(a[112:120])
+	v = a[14]
 	t14 += v * b0
 	t15 += v * b1
 	t16 += v * b2
@@ -492,7 +487,7 @@ func M(o *[128]byte, a [128]byte, b [128]byte) {
 	t27 += v * b13
 	t28 += v * b14
 	t29 += v * b15
-	v = binary.LittleEndian.Uint64(a[120:128])
+	v = a[15]
 	t15 += v * b0
 	t16 += v * b1
 	t17 += v * b2
@@ -629,46 +624,39 @@ func M(o *[128]byte, a [128]byte, b [128]byte) {
 	c = v / 65536
 	t15 = v - c*65536
 	t0 += c - 1 + 37*(c-1)
-	binary.LittleEndian.PutUint64(o[0:8], t0)
-	binary.LittleEndian.PutUint64(o[8:16], t1)
-	binary.LittleEndian.PutUint64(o[16:24], t2)
-	binary.LittleEndian.PutUint64(o[24:32], t3)
-	binary.LittleEndian.PutUint64(o[32:40], t4)
-	binary.LittleEndian.PutUint64(o[40:48], t5)
-	binary.LittleEndian.PutUint64(o[48:56], t6)
-	binary.LittleEndian.PutUint64(o[56:64], t7)
-	binary.LittleEndian.PutUint64(o[64:72], t8)
-	binary.LittleEndian.PutUint64(o[72:80], t9)
-	binary.LittleEndian.PutUint64(o[80:88], t10)
-	binary.LittleEndian.PutUint64(o[88:96], t11)
-	binary.LittleEndian.PutUint64(o[96:104], t12)
-	binary.LittleEndian.PutUint64(o[104:112], t13)
-	binary.LittleEndian.PutUint64(o[112:120], t14)
-	binary.LittleEndian.PutUint64(o[120:128], t15)
+	o[0] = t0
+	o[1] = t1
+	o[2] = t2
+	o[3] = t3
+	o[4] = t4
+	o[5] = t5
+	o[6] = t6
+	o[7] = t7
+	o[8] = t8
+	o[9] = t9
+	o[10] = t10
+	o[11] = t11
+	o[12] = t12
+	o[13] = t13
+	o[14] = t14
+	o[15] = t15
 }
 
-func S(o *[128]byte, a [128]byte) {
+func S(o *[16]int64, a [16]int64) {
 	M(o, a, a)
 }
 
 func vn(x []byte, xi int, y []byte, yi int, n int) bool {
-	var d byte = 0
+	var d int32 = 0
 	for i := 0; i < n; i++ {
-		d |= x[xi+i] ^ y[yi+i]
+		d |= int32(x[xi+i] ^ y[yi+i])
 	}
-	e := uint16(d)
-
-	//VERIFY
-	//using e uint16 so d-1 can scroll back to 65535?
-	return ((1 & ((e - 1) >> 8)) - 1) == 1
-	/* original
-	return (1 & ((d - 1) >> 8)) - 1
-	*/
+	return ((1 & ((d - 1) >> 8)) - 1) == 1
 }
 
-func pow2523(o *[128]byte, i [128]byte) {
+func pow2523(o *[16]int64, i [16]int64) {
 	c := gf(nil)
-	for a := 0; a < 128; a++ {
+	for a := 0; a < 16; a++ {
 		c[a] = i[a]
 	}
 	for a := 250; a >= 0; a-- {
@@ -677,15 +665,15 @@ func pow2523(o *[128]byte, i [128]byte) {
 			M(&c, c, i)
 		}
 	}
-	for a := 0; a < 128; a++ {
+	for a := 0; a < 16; a++ {
 		o[a] = c[a]
 	}
 }
 
 //i is 8 byte array
-func inv25519(o *[128]byte, i [128]byte) {
+func inv25519(o *[16]int64, i [16]int64) {
 	c := gf(nil)
-	for a := 0; a < 128; a++ {
+	for a := 0; a < 16; a++ {
 		c[a] = i[a]
 	}
 	for a := 253; a >= 0; a-- {
@@ -694,71 +682,75 @@ func inv25519(o *[128]byte, i [128]byte) {
 			M(&c, c, i)
 		}
 	}
-	for a := 0; a < 128; a++ {
+	for a := 0; a < 16; a++ {
 		o[a] = c[a]
 	}
 }
-func set25519(r *[128]byte, a [128]byte) {
+func set25519(r *[16]int64, a [16]int64) {
 	for i := 0; i < 16; i++ {
-		binary.LittleEndian.PutUint64(r[i*8:i*8+8], binary.LittleEndian.Uint64(a[i*8:i*8+8])|0)
+		r[i] = a[i]
 	}
-}
-func car25519(o *[128]byte) {
-	c := uint64(1)
-	var v uint64
-	for i := 0; i < 16; i++ {
-		v = binary.LittleEndian.Uint64(o[i*8:i*8+8]) + c + 65535
-		c = v / 65536
-		binary.LittleEndian.PutUint64(o[i*8:i*8+8], v-c*65536)
-	}
-	binary.LittleEndian.PutUint64(o[0:8], c-1+37*(c-1))
 }
 
-func sel25519(p *[128]byte, q *[128]byte, b uint64) {
-	var t uint64
+func car25519(o *[16]int64) {
+	c := int64(1)
+	var v int64
+	for i := 0; i < 16; i++ {
+		v = o[i] + c + 65535
+		c = v / 65536
+		o[i] = v - c*65536
+	}
+	o[0] += c - 1 + 37*(c-1)
+}
+
+func sel25519(p *[16]int64, q *[16]int64, b int) {
+	var t int64
 	c := ^(b - 1)
 	for i := 0; i < 16; i++ {
-		t = c & (binary.LittleEndian.Uint64(p[i*8:i*8+8]) ^ binary.LittleEndian.Uint64(q[i*8:i*8+8]))
-		binary.LittleEndian.PutUint64(p[i*8:i*8+8], binary.LittleEndian.Uint64(p[i*8:i*8+8])^t)
-		binary.LittleEndian.PutUint64(q[i*8:i*8+8], binary.LittleEndian.Uint64(q[i*8:i*8+8])^t)
+		t = int64(c) & (p[i] ^ q[i])
+		p[i] ^= t
+		q[i] ^= t
 	}
 }
 
-func pack25519(o *[32]byte, n [128]byte) {
+func pack25519(o *[32]byte, n [16]int64) {
 	m := gf(nil)
 	t := n
 	car25519(&t)
 	car25519(&t)
 	car25519(&t)
 	for j := 0; j < 2; j++ {
-		binary.LittleEndian.PutUint64(m[0:8], binary.LittleEndian.Uint64(t[0:8])-0xffed)
-		for i := 0; i < 15; i++ {
-			binary.LittleEndian.PutUint64(m[i*8:i*8+8], binary.LittleEndian.Uint64(t[i*8:i*8+8])-0xffff-((binary.LittleEndian.Uint64(m[(i-1)*8:(i-1)*8+8])>>16)&1))
-			binary.LittleEndian.PutUint64(m[(i-1)*8:(i-1)*8+8], binary.LittleEndian.Uint64(m[(i-1)*8:(i-1)*8+8])&0xffff)
+		m[0] = t[0] - 0xffed
+		for i := 1; i < 15; i++ {
+			m[i] = t[i] - 0xffff - ((m[i-1] >> 16) & 1)
+			m[i-1] &= 0xffff
 		}
-		binary.LittleEndian.PutUint64(m[15*8:15*8+8], binary.LittleEndian.Uint64(t[15*8:15*8+8])-0x7fff-((binary.LittleEndian.Uint64(m[14*8:14*8+8])>>16)&1))
-		b := (binary.LittleEndian.Uint64(m[15*8:15*8+8]) >> 16) & 1
-		binary.LittleEndian.PutUint64(m[14*8:14*8+8], binary.LittleEndian.Uint64(m[14*8:14*8+8])&0xffff)
-		sel25519(&t, &m, 1-b)
+		m[15] = t[15] - 0x7fff - ((m[14] >> 16) & 1)
+		b := (m[15] >> 16) & 1
+		m[14] &= 0xffff
+		sel25519(&t, &m, int(1-b))
 	}
 	for i := 0; i < 16; i++ { //VERIFY THIS!!!!!!!
 
-		o[2*i] = t[i*8+7]
-		o[2*i+1] = t[i*8+6]
+		o[2*i] = byte(t[i])        //truncate
+		o[2*i+1] = byte(t[i] >> 8) //truncate
 		/* original
-				o[2 * i] = t[i] & 0xff;
-		        o[2 * i + 1] = t[i] >> 8;
+		o[2 * i] = t[i] & 0xff;
+		o[2 * i + 1] = t[i] >> 8;
+
+		o[2*i]=t[i]&0xff;
+		o[2*i+1]=t[i]>>8;
 		*/
 	}
 }
 
-func cswap(p *[4][128]byte, q *[4][128]byte, b uint64) {
+func cswap(p *[4][16]int64, q *[4][16]int64, b int) {
 	for i := 0; i < 4; i++ {
 		sel25519(&p[i], &q[i], b)
 	}
 }
 
-func neq25519(a [128]byte, b [128]byte) bool {
+func neq25519(a [16]int64, b [16]int64) bool {
 	c := [32]byte{}
 	d := [32]byte{}
 	pack25519(&c, a)
@@ -766,37 +758,24 @@ func neq25519(a [128]byte, b [128]byte) bool {
 	return crypto_verify_32(c, 0, d, 0)
 }
 
-func par25519(a [128]byte) byte {
+func par25519(a [16]int64) byte {
 	d := [32]byte{}
 	pack25519(&d, a)
 	return d[0] & 1
 }
-
-func unpack25519(o *[128]byte, n [32]byte) {
-	for i := 0; i < 16; i++ { //VERIFY THIS!!!!!
-		//NOTE(ERASE THIS): filling two last bytes of each 8 byte section
-		//sum is basically setting penultimate byte because all zeroes
-		TempBinary64 := make([]byte, 8)
-		TempBinary64[6] = n[2*i+1]
-		TempBinary64[7] = n[2*i]
-		binary.LittleEndian.PutUint64(o[i*8:i*8+8], binary.LittleEndian.Uint64(TempBinary64))
-		/* original
-		o[i] = n[2*i] + (n[2*i+1] << 8)
-		*/
+func unpack25519(o *[16]int64, n [32]byte) {
+	for i := 0; i < 16; i++ {
+		o[i] = int64(n[2*i]) + (int64(n[2*i+1]) << 8)
 	}
-	binary.LittleEndian.PutUint64(o[120:128], binary.LittleEndian.Uint64(o[120:128])&0x7fff)
+	o[15] &= 0x7fff
 }
 
 func crypto_verify_32(x [32]byte, xi int, y [32]byte, yi int) bool {
-	//can we do this more effectively?
-	var x1 []byte
-	var y1 []byte
-	copy(x[:], x1)
-	copy(y[:], y1)
-	return vn(x1, xi, y1, yi, 32)
+
+	return vn(x[:], xi, y[:], yi, 32)
 }
 
-func add(p *[4][128]byte, q *[4][128]byte) {
+func add(p *[4][16]int64, q *[4][16]int64) {
 	a := gf(nil)
 	b := gf(nil)
 	c := gf(nil)
@@ -827,32 +806,26 @@ func add(p *[4][128]byte, q *[4][128]byte) {
 	M(&p[3], e, h)
 }
 
-func pack(r *[32]byte, p [4][16 * 8]byte) {
+func pack(r *[32]byte, p [4][16]int64) {
 	tx := gf(nil)
 	ty := gf(nil)
 	zi := gf(nil)
-	inv25519(&zi, p[0])
+	inv25519(&zi, p[2])
 	M(&tx, p[0], zi)
 	M(&ty, p[1], zi)
 	pack25519(r, ty)
 	r[31] ^= par25519(tx) << 7
 }
 
-func scalarmult(p *[4][128]byte, q *[4][128]byte, s *[32]byte) {
-	var b uint64
+func scalarmult(p *[4][16]int64, q *[4][16]int64, s [32]byte) {
+	var b int
 	set25519(&p[0], gf0)
 	set25519(&p[1], gf1)
 	set25519(&p[2], gf1)
 	set25519(&p[3], gf0)
-	for i := 254; i >= 0; i-- { //Note(remember to remove this): per bit operation
-		//assuming | or 0 is math floor in js?
-		//Note: for each 8 bits on every s byte we will fill an uint64
-		//(i & 7) means we will ignore any numbers to the left of first binary digits, cycle through 0-7 infinitely as i increments
-		//Do we ever only work with the last byte?? VERIFY!!!
-		emptyByte64 := make([]byte, 8)
-		emptyByte64[7] = (s[i/8] >> (i & 7)) & 1
-		binary.LittleEndian.PutUint64(emptyByte64, b)
-		//b = (s[(i/8)|0] >> (i & 7)) & 1
+	for i := 254; i >= 0; i-- {
+
+		b = (int(s[(i/8)]) >> (i & 7)) & 1
 		cswap(p, q, b)
 		add(q, p)
 		add(p, p)
@@ -860,7 +833,7 @@ func scalarmult(p *[4][128]byte, q *[4][128]byte, s *[32]byte) {
 	}
 }
 
-func unpack(r *[4][16 * 8]byte, p [32]byte) int {
+func unpack(r *[4][16]int64, p [32]byte) int {
 	t := gf(nil)
 	chk := gf(nil)
 	num := gf(nil)

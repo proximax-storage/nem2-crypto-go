@@ -5,10 +5,12 @@
 package crypto
 
 import (
-	"crypto/rand"
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/sha256"
-	"crypto/sha512"
 	"crypto/subtle"
+	"encoding/hex"
+	"fmt"
 	"io"
 
 	"golang.org/x/crypto/hkdf"
@@ -100,8 +102,9 @@ func Clamp(d *[]byte) {
 	(*d)[31] |= 64
 }
 func PrepareForScalarMult(sk []byte) []byte {
-	d := []byte{}
-	hash := sha512.Sum512_256(sk)
+	d := make([]byte, 64)
+
+	hash, _ := HashesSha3_512(sk)
 	n := copy(d[0:32], hash[:])
 	if n != 32 {
 		panic("Invalid checksum copy!")
@@ -112,15 +115,15 @@ func PrepareForScalarMult(sk []byte) []byte {
 func deriveSharedSecret(privateKey []byte, publicKey []byte) [32]byte {
 	d := PrepareForScalarMult(privateKey)
 	// sharedKey = pack(p = d (derived from privateKey) * q (derived from publicKey))
-	q := [4][128]byte{gf(nil), gf(nil), gf(nil), gf(nil)}
-	p := [4][128]byte{gf(nil), gf(nil), gf(nil), gf(nil)}
+	q := [4][16]int64{gf(nil), gf(nil), gf(nil), gf(nil)}
+	p := [4][16]int64{gf(nil), gf(nil), gf(nil), gf(nil)}
 	sharedSecret := [32]byte{}
 	var keyCopy [32]byte
 	var d1 [32]byte
 	copy(d1[:], d)
 	copy(keyCopy[:], publicKey)
 	unpack(&q, keyCopy)
-	scalarmult(&p, &q, &d1)
+	scalarmult(&p, &q, d1)
 	pack(&sharedSecret, p)
 	return sharedSecret
 }
@@ -133,9 +136,6 @@ func deriveSharedKey(privateKey []byte, publicKey []byte) []byte {
 	// Non-secret salt, optional (can be nil).
 	// Recommended: hash-length random value.
 	salt := make([]byte, hash().Size())
-	if _, err := rand.Read(salt); err != nil {
-		panic(err)
-	}
 
 	// Non-secret context info, optional (can be nil).
 	info := []byte("catapult")
@@ -143,9 +143,51 @@ func deriveSharedKey(privateKey []byte, publicKey []byte) []byte {
 	// Generate three 128-bit derived keys.
 	hkdf := hkdf.New(hash, sharedSecret[:], salt, info)
 
-	key := make([]byte, 16)
+	key := make([]byte, 32)
 	if _, err := io.ReadFull(hkdf, key); err != nil {
 		panic(err)
 	}
 	return key
+}
+
+func encodeMessage(senderPrivateKey PrivateKey, recipientPublicKey PublicKey, message string, iv []byte) (string, error) {
+
+	sharedKey := deriveSharedKey(senderPrivateKey.Raw, recipientPublicKey.Raw)
+	plainText := []byte(message)
+
+	block, err := aes.NewCipher(sharedKey)
+	if err != nil {
+		return "", err
+	}
+	mode, err := cipher.NewGCM(block)
+	if err != nil {
+		panic("unable to GCM encrypt")
+	}
+	cipherText := mode.Seal(nil, iv, plainText, nil)
+	return fmt.Sprintf("%x", cipherText), nil
+}
+
+func decodeMessage(recipientPrivateKey PrivateKey, senderPublicKey PublicKey, payload string, Iv []byte) (string, error) {
+
+	sharedKey := deriveSharedKey(recipientPrivateKey.Raw, senderPublicKey.Raw)
+	block, err := aes.NewCipher(sharedKey)
+	if err != nil {
+		return "", err
+	}
+
+	aesgcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	cipherText, err := hex.DecodeString(payload)
+	if err != nil {
+		return "", err
+	}
+
+	plainText, err := aesgcm.Open(nil, Iv, []byte(cipherText), nil)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", plainText), nil
 }
