@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"encoding/hex"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -59,30 +58,28 @@ func TestHashesRipemd160(t *testing.T) {
 }
 
 func TestEncryptDecryptGCM(t *testing.T) {
-	sender, _ := NewRandomKeyPair()
-	recipient, _ := NewRandomKeyPair()
+	sender, err := NewRandomKeyPair()
+	assert.Nil(t, err)
+	recipient, err := NewRandomKeyPair()
+	assert.Nil(t, err)
 	startMessage := "This is a random test message that must match forever and ever."
 	encoded, err := encodeMessage(sender.PrivateKey, recipient.PublicKey, startMessage)
-	if err != nil {
-		panic(fmt.Sprintf("Unable to encode message: %s", err))
-	}
+	assert.Nil(t, err)
 	decodedStr, err := hex.DecodeString(encoded)
-	if err != nil {
-		panic(fmt.Sprintf("Unable to get encoded string: %s", err))
-	}
+	assert.Nil(t, err)
 	decoded, err := decodeMessage(recipient.PrivateKey, sender.PublicKey, decodedStr)
-	if err != nil {
-		panic(fmt.Sprintf("Unable to decode message: %s", err))
-	}
+	assert.Nil(t, err)
 	assert.Equal(t, startMessage, decoded)
 }
 
 func TestDerivedKeyCompatFixedKeys(t *testing.T) {
-	sender, _ := NewRandomKeyPair()
-	recipient, _ := NewRandomKeyPair()
+	sender, err := NewRandomKeyPair()
+	assert.Nil(t, err)
+	recipient, err := NewRandomKeyPair()
+	assert.Nil(t, err)
 	salt := MathUtils.GetRandomByteArray(32)
 	cipher := NewEd25519BlockCipher(sender, recipient, nil)
-	sharedKey, _ := cipher.GetSharedKey(sender.PrivateKey, recipient.PublicKey, salt)
-	sharedKey2, _ := cipher.GetSharedKey(recipient.PrivateKey, sender.PublicKey, salt)
+	sharedKey, err := cipher.GetSharedKey(sender.PrivateKey, recipient.PublicKey, salt)
+	sharedKey2, err := cipher.GetSharedKey(recipient.PrivateKey, sender.PublicKey, salt)
 	assert.Equal(t, sharedKey, sharedKey2)
 }
