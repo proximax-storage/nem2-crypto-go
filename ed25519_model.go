@@ -116,6 +116,39 @@ func (ref *Ed25519BlockCipher) decode(ciphertext []byte, sharedKey []byte, ivDat
 	return buf[:messageSize], nil
 }
 
+func (ref *Ed25519BlockCipher) encodeGCM(message []byte, sharedKey []byte, ivData []byte) ([]byte, error) {
+	plainText := []byte(message)
+
+	block, err := aes.NewCipher(sharedKey)
+	if err != nil {
+		return nil, err
+	}
+	mode, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	cipherText := mode.Seal(nil, ivData, plainText, nil)
+	return cipherText, nil
+}
+
+func (ref *Ed25519BlockCipher) decodeGCM(ciphertext []byte, sharedKey []byte, ivData []byte) ([]byte, error) {
+	block, err := aes.NewCipher(sharedKey)
+	if err != nil {
+		return nil, err
+	}
+
+	aesgcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	plainText, err := aesgcm.Open(nil, ivData, ciphertext, nil)
+	if err != nil {
+		return nil, err
+	}
+	return plainText, nil
+}
+
 // GetSharedKey create shared bytes
 func (ref *Ed25519BlockCipher) GetSharedKey(privateKey *PrivateKey, publicKey *PublicKey, salt []byte) ([]byte, error) {
 
@@ -141,6 +174,55 @@ func (ref *Ed25519BlockCipher) GetSharedKey(privateKey *PrivateKey, publicKey *P
 	}
 
 	return HashesSha3_256(sharedKey.Raw)
+}
+
+// Encrypt slice byte
+func (ref *Ed25519BlockCipher) EncryptGCM(input []byte) ([]byte, error) {
+	// Setup salt.
+	salt := make([]byte, ref.keyLength)
+	_, err := io.ReadFull(ref.seed, salt)
+	if err != nil {
+		return nil, err
+	}
+
+	// Derive shared key.
+	sharedKey, err := ref.GetSharedKey(ref.senderKeyPair.PrivateKey, ref.recipientKeyPair.PublicKey, salt)
+	if err != nil {
+		return nil, err
+	}
+	// Setup IV.
+	ivData := make([]byte, 12)
+	_, err = io.ReadFull(ref.seed, ivData)
+	if err != nil {
+		return nil, err
+	}
+	// Encode.
+	buf, err := ref.encodeGCM(input, sharedKey, ivData)
+	if err != nil {
+		return nil, err
+	}
+
+	result := append(append(salt, ivData...), buf...)
+
+	return result, nil
+}
+
+// Decrypt slice byte
+func (ref *Ed25519BlockCipher) DecryptGCM(input []byte) ([]byte, error) {
+	if len(input) < 64 {
+		return nil, errors.New("input is to short for decryption")
+	}
+
+	salt := input[:ref.keyLength]
+	ivData := input[ref.keyLength : ref.keyLength+12]
+	encData := input[ref.keyLength+12:]
+	// Derive shared key.
+	sharedKey, err := ref.GetSharedKey(ref.recipientKeyPair.PrivateKey, ref.senderKeyPair.PublicKey, salt)
+	if err != nil {
+		return nil, err
+	}
+	// Decode.
+	return ref.decodeGCM(encData, sharedKey, ivData)
 }
 
 // Encrypt slice byte

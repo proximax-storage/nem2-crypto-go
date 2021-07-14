@@ -61,28 +61,22 @@ func TestHashesRipemd160(t *testing.T) {
 func TestEncryptDecryptGCM(t *testing.T) {
 	sender, _ := NewRandomKeyPair()
 	recipient, _ := NewRandomKeyPair()
-	iv := MathUtils.GetRandomByteArray(12)
-	encoded, err := encodeMessage(*sender.PrivateKey, *recipient.PublicKey, "This is a random test message that must match forever and ever.", iv)
+	startMessage := "This is a random test message that must match forever and ever."
+	encoded, err := encodeMessage(sender.PrivateKey, recipient.PublicKey, startMessage)
 	if err != nil {
 		panic(fmt.Sprintf("Unable to encode message: %s", err))
 	}
-	decoded, err := decodeMessage(*recipient.PrivateKey, *sender.PublicKey, encoded, iv)
+	decodedStr, err := hex.DecodeString(encoded)
+	if err != nil {
+		panic(fmt.Sprintf("Unable to get encoded string: %s", err))
+	}
+	decoded, err := decodeMessage(recipient.PrivateKey, sender.PublicKey, decodedStr)
 	if err != nil {
 		panic(fmt.Sprintf("Unable to decode message: %s", err))
 	}
+	fmt.Print(startMessage)
 	fmt.Print(decoded)
-}
-
-func TestDerivedKeyCompat(t *testing.T) {
-	sender, _ := NewRandomKeyPair()
-	recipient, _ := NewRandomKeyPair()
-	sharedKey := deriveSharedKey(sender.PrivateKey.Raw, recipient.PublicKey.Raw)
-	sharedKey2 := deriveSharedKey(recipient.PrivateKey.Raw, sender.PublicKey.Raw)
-	fmt.Printf("a %s\n", sender.PrivateKey.String())
-	fmt.Printf("b %s\n", recipient.PrivateKey.String())
-	fmt.Printf("a %x", sharedKey)
-	fmt.Printf("b %x", sharedKey2)
-	assert.Equal(t, sharedKey, sharedKey2)
+	assert.Equal(t, startMessage, decoded)
 }
 
 func TestDerivedKeyCompatFixedKeys(t *testing.T) {
@@ -90,8 +84,10 @@ func TestDerivedKeyCompatFixedKeys(t *testing.T) {
 	receiverpriv, _ := NewPrivateKeyfromHexString("c6638ba0981161967b67e9f45eca27b3d94c4261dece9c93259879824cc176b4")
 	sender, _ := NewKeyPair(senderpriv, nil, nil)
 	recipient, _ := NewKeyPair(receiverpriv, nil, nil)
-	sharedKey := deriveSharedKey(sender.PrivateKey.Raw, recipient.PublicKey.Raw)
-	sharedKey2 := deriveSharedKey(recipient.PrivateKey.Raw, sender.PublicKey.Raw)
+	salt := MathUtils.GetRandomByteArray(32)
+	cipher := NewEd25519BlockCipher(sender, recipient, nil)
+	sharedKey, _ := cipher.GetSharedKey(sender.PrivateKey, recipient.PublicKey, salt)
+	sharedKey2, _ := cipher.GetSharedKey(recipient.PrivateKey, sender.PublicKey, salt)
 	fmt.Printf("a %s\n", sender.PrivateKey.String())
 	fmt.Printf("b %s\n", recipient.PrivateKey.String())
 	fmt.Printf("a %x", sharedKey)

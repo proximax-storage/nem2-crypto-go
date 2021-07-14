@@ -2,7 +2,7 @@
 // Use of this source code is governed by the Apache 2.0
 // license that can be found in the LICENSE file.
 
-// Ported in 2021 to Go
+// Ported in 2021 to Go. DISCLAIMER: THIS LIBRARY HAS NOT BEEN TESTED
 
 // README: This is copied from tweeetnacl/nacl.fast.js and is updated to export custom hash functions.
 
@@ -733,17 +733,10 @@ func pack25519(o *[32]byte, n [16]int64) {
 		m[14] &= 0xffff
 		sel25519(&t, &m, int(1-b))
 	}
-	for i := 0; i < 16; i++ { //VERIFY THIS!!!!!!!
+	for i := 0; i < 16; i++ {
 
-		o[2*i] = byte(t[i] & 0xff) //truncate
-		o[2*i+1] = byte(t[i] >> 8) //truncate
-		/* original
-		o[2 * i] = t[i] & 0xff;
-		o[2 * i + 1] = t[i] >> 8;
-
-		o[2*i]=t[i]&0xff;
-		o[2*i+1]=t[i]>>8;
-		*/
+		o[2*i] = byte(t[i] & 0xff)
+		o[2*i+1] = byte(t[i] >> 8)
 	}
 }
 
