@@ -705,9 +705,9 @@ func car25519(o *[16]int64) {
 
 func sel25519(p *[16]int64, q *[16]int64, b int) {
 	var t int64
-	c := ^(b - 1)
+	c := ^(int64(b) - 1)
 	for i := 0; i < 16; i++ {
-		t = int64(c) & (p[i] ^ q[i])
+		t = c & (p[i] ^ q[i])
 		p[i] ^= t
 		q[i] ^= t
 	}
@@ -715,7 +715,10 @@ func sel25519(p *[16]int64, q *[16]int64, b int) {
 
 func pack25519(o *[32]byte, n [16]int64) {
 	m := gf(nil)
-	t := n
+	t := [16]int64{}
+	for i := 0; i < 16; i++ {
+		t[i] = n[i]
+	}
 	car25519(&t)
 	car25519(&t)
 	car25519(&t)
@@ -732,7 +735,7 @@ func pack25519(o *[32]byte, n [16]int64) {
 	}
 	for i := 0; i < 16; i++ { //VERIFY THIS!!!!!!!
 
-		o[2*i] = byte(t[i])        //truncate
+		o[2*i] = byte(t[i] & 0xff) //truncate
 		o[2*i+1] = byte(t[i] >> 8) //truncate
 		/* original
 		o[2 * i] = t[i] & 0xff;
@@ -744,9 +747,9 @@ func pack25519(o *[32]byte, n [16]int64) {
 	}
 }
 
-func cswap(p *[4][16]int64, q *[4][16]int64, b int) {
+func cswap(p *[4][16]int64, q *[4][16]int64, b uint8) {
 	for i := 0; i < 4; i++ {
-		sel25519(&p[i], &q[i], b)
+		sel25519(&p[i], &q[i], int(b))
 	}
 }
 
@@ -818,14 +821,14 @@ func pack(r *[32]byte, p [4][16]int64) {
 }
 
 func scalarmult(p *[4][16]int64, q *[4][16]int64, s [32]byte) {
-	var b int
+	var b uint8
 	set25519(&p[0], gf0)
 	set25519(&p[1], gf1)
 	set25519(&p[2], gf1)
 	set25519(&p[3], gf0)
-	for i := 254; i >= 0; i-- {
+	for i := 255; i >= 0; i-- {
 
-		b = (int(s[(i/8)]) >> (i & 7)) & 1
+		b = (s[(i/8)] >> (i & 7)) & 1
 		cswap(p, q, b)
 		add(q, p)
 		add(p, p)
