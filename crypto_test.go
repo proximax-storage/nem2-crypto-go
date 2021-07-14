@@ -71,8 +71,16 @@ func TestEncryptDecryptGCM(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, startMessage, decoded)
 }
+func TestDerivedKeyCompatNaCl(t *testing.T) {
+	sender, _ := NewRandomKeyPair()
+	recipient, _ := NewRandomKeyPair()
+	salt := MathUtils.GetRandomByteArray(32)
+	sharedKey := deriveSharedKey(sender.PrivateKey.Raw, recipient.PublicKey.Raw, salt)
+	sharedKey2 := deriveSharedKey(recipient.PrivateKey.Raw, sender.PublicKey.Raw, salt)
+	assert.Equal(t, sharedKey, sharedKey2)
+}
 
-func TestDerivedKeyCompatFixedKeys(t *testing.T) {
+func TestDerivedKeyCompatDefault(t *testing.T) {
 	sender, err := NewRandomKeyPair()
 	assert.Nil(t, err)
 	recipient, err := NewRandomKeyPair()
@@ -80,6 +88,27 @@ func TestDerivedKeyCompatFixedKeys(t *testing.T) {
 	salt := MathUtils.GetRandomByteArray(32)
 	cipher := NewEd25519BlockCipher(sender, recipient, nil)
 	sharedKey, err := cipher.GetSharedKey(sender.PrivateKey, recipient.PublicKey, salt)
+	assert.Nil(t, err)
 	sharedKey2, err := cipher.GetSharedKey(recipient.PrivateKey, sender.PublicKey, salt)
+	assert.Nil(t, err)
 	assert.Equal(t, sharedKey, sharedKey2)
+}
+
+func TestDerivedKeyCompatNaClMatchesEd25519Impl(t *testing.T) {
+	sender, err := NewRandomKeyPair()
+	assert.Nil(t, err)
+	recipient, err := NewRandomKeyPair()
+	assert.Nil(t, err)
+	salt := MathUtils.GetRandomByteArray(32)
+	cipher := NewEd25519BlockCipher(sender, recipient, nil)
+	sharedKey, err := cipher.GetSharedKey(sender.PrivateKey, recipient.PublicKey, salt)
+	assert.Nil(t, err)
+	sharedKey2, err := cipher.GetSharedKey(recipient.PrivateKey, sender.PublicKey, salt)
+	assert.Nil(t, err)
+	sharedKey3 := deriveSharedKey(sender.PrivateKey.Raw, recipient.PublicKey.Raw, salt)
+	sharedKey4 := deriveSharedKey(recipient.PrivateKey.Raw, sender.PublicKey.Raw, salt)
+	assert.Equal(t, sharedKey, sharedKey2)
+	assert.Equal(t, sharedKey3, sharedKey4)
+	assert.Equal(t, sharedKey, sharedKey3)
+
 }

@@ -8,7 +8,10 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/hex"
+	"fmt"
+	"io"
 
+	"golang.org/x/crypto/hkdf"
 	"golang.org/x/crypto/ripemd160"
 	"golang.org/x/crypto/sha3"
 )
@@ -114,4 +117,53 @@ func decodeMessage(recipientPrivateKey *PrivateKey, senderPublicKey *PublicKey, 
 		return "", err
 	}
 	return string(plainText), nil
+}
+
+func PrepareForScalarMult(sk []byte) []byte {
+	hash, err := HashesSha3_512(sk)
+	if err != nil {
+		fmt.Println(err)
+	}
+	a := hash[:32]
+	a[31] &= 0x7F
+	a[31] |= 0x40
+	a[0] &= 0xF8
+	return a
+}
+func deriveSharedSecret(privateKey []byte, publicKey []byte) [32]byte {
+	d := PrepareForScalarMult(privateKey)
+
+	// sharedKey = pack(p = d (derived from privateKey) * q (derived from publicKey))
+	q := [4][16]float64{gf(nil), gf(nil), gf(nil), gf(nil)}
+	p := [4][16]float64{gf(nil), gf(nil), gf(nil), gf(nil)}
+	sharedSecret := [32]byte{}
+	var keyCopy [32]byte
+	var d1 [32]byte
+	copy(d1[:], d)
+	copy(keyCopy[:], publicKey)
+	unpack(&q, keyCopy)
+	scalarmult(&p, &q, d1)
+	pack(&sharedSecret, p)
+	return sharedSecret
+}
+
+func deriveSharedKey(privateKey []byte, publicKey []byte, salt []byte) []byte {
+	sharedSecret := deriveSharedSecret(privateKey, publicKey)
+	// Underlying hash function for HMAC.
+	hash := sha3.New256
+
+	// Non-secret salt, optional (can be nil).
+	// Recommended: hash-length random value.
+
+	// Non-secret context info, optional (can be nil).
+	info := []byte("catapult")
+
+	// Generate three 128-bit derived keys.
+	hkdf := hkdf.New(hash, sharedSecret[:], salt, info)
+
+	key := make([]byte, 32)
+	if _, err := io.ReadFull(hkdf, key); err != nil {
+		panic(err)
+	}
+	return key
 }
