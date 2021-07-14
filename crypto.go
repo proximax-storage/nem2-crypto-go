@@ -115,8 +115,8 @@ func PrepareForScalarMult(sk []byte) []byte {
 func deriveSharedSecret(privateKey []byte, publicKey []byte) [32]byte {
 	d := PrepareForScalarMult(privateKey)
 	// sharedKey = pack(p = d (derived from privateKey) * q (derived from publicKey))
-	q := [4][16]int64{gf(nil), gf(nil), gf(nil), gf(nil)}
-	p := [4][16]int64{gf(nil), gf(nil), gf(nil), gf(nil)}
+	q := [4][16]float64{gf(nil), gf(nil), gf(nil), gf(nil)}
+	p := [4][16]float64{gf(nil), gf(nil), gf(nil), gf(nil)}
 	sharedSecret := [32]byte{}
 	var keyCopy [32]byte
 	var d1 [32]byte

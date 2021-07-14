@@ -18,6 +18,8 @@
 
 package crypto
 
+import "math"
+
 func initNine() [32]byte {
 	val := [32]byte{}
 	val[0] = 9
@@ -29,8 +31,8 @@ var (
 	_9 = initNine()
 )
 
-func gf(init []int64) [16]int64 {
-	r := [16]int64{}
+func gf(init []float64) [16]float64 {
+	r := [16]float64{}
 	if len(init) > 0 {
 		for i := 0; i < len(init); i++ {
 			r[i] = init[i]
@@ -40,10 +42,10 @@ func gf(init []int64) [16]int64 {
 }
 
 var (
-	gf0     = gf([]int64{})
-	gf1     = gf([]int64{1})
-	_121665 = gf([]int64{0xdb41, 1})
-	D       = gf([]int64{
+	gf0     = gf([]float64{})
+	gf1     = gf([]float64{1})
+	_121665 = gf([]float64{0xdb41, 1})
+	D       = gf([]float64{
 		0x78a3,
 		0x1359,
 		0x4dca,
@@ -61,7 +63,7 @@ var (
 		0x6cee,
 		0x5203,
 	})
-	D2 = gf([]int64{
+	D2 = gf([]float64{
 		0xf159,
 		0x26b2,
 		0x9b94,
@@ -79,7 +81,7 @@ var (
 		0xd9dc,
 		0x2406,
 	})
-	X = gf([]int64{
+	X = gf([]float64{
 		0xd51a,
 		0x8f25,
 		0x2d60,
@@ -97,7 +99,7 @@ var (
 		0x36d3,
 		0x2169,
 	})
-	Y = gf([]int64{
+	Y = gf([]float64{
 		0x6658,
 		0x6666,
 		0x6666,
@@ -115,7 +117,7 @@ var (
 		0x6666,
 		0x6666,
 	})
-	I = gf([]int64{
+	I = gf([]float64{
 		0xa0b0,
 		0x4a0e,
 		0x1b27,
@@ -135,7 +137,7 @@ var (
 	})
 )
 
-var L = [...]int64{
+var L = [...]float64{
 	0xed,
 	0xd3,
 	0xf5,
@@ -170,52 +172,52 @@ var L = [...]int64{
 	0x10,
 }
 
-func B(o *[16]int64, a [16]int64, b [16]int64) {
+func B(o *[16]float64, a [16]float64, b [16]float64) {
 	for i := 0; i < 16; i++ {
 		o[i] = a[i] + b[i]
 	}
 }
 
-func Z(o *[16]int64, a [16]int64, b [16]int64) {
+func Z(o *[16]float64, a [16]float64, b [16]float64) {
 	for i := 0; i < 16; i++ {
 		o[i] = a[i] - b[i]
 	}
 }
 
-func M(o *[16]int64, a [16]int64, b [16]int64) {
-	v := int64(0)
-	c := int64(0)
-	t0 := int64(0)
-	t1 := int64(0)
-	t2 := int64(0)
-	t3 := int64(0)
-	t4 := int64(0)
-	t5 := int64(0)
-	t6 := int64(0)
-	t7 := int64(0)
-	t8 := int64(0)
-	t9 := int64(0)
-	t10 := int64(0)
-	t11 := int64(0)
-	t12 := int64(0)
-	t13 := int64(0)
-	t14 := int64(0)
-	t15 := int64(0)
-	t16 := int64(0)
-	t17 := int64(0)
-	t18 := int64(0)
-	t19 := int64(0)
-	t20 := int64(0)
-	t21 := int64(0)
-	t22 := int64(0)
-	t23 := int64(0)
-	t24 := int64(0)
-	t25 := int64(0)
-	t26 := int64(0)
-	t27 := int64(0)
-	t28 := int64(0)
-	t29 := int64(0)
-	t30 := int64(0)
+func M(o *[16]float64, a [16]float64, b [16]float64) {
+	v := float64(0)
+	c := float64(0)
+	t0 := float64(0)
+	t1 := float64(0)
+	t2 := float64(0)
+	t3 := float64(0)
+	t4 := float64(0)
+	t5 := float64(0)
+	t6 := float64(0)
+	t7 := float64(0)
+	t8 := float64(0)
+	t9 := float64(0)
+	t10 := float64(0)
+	t11 := float64(0)
+	t12 := float64(0)
+	t13 := float64(0)
+	t14 := float64(0)
+	t15 := float64(0)
+	t16 := float64(0)
+	t17 := float64(0)
+	t18 := float64(0)
+	t19 := float64(0)
+	t20 := float64(0)
+	t21 := float64(0)
+	t22 := float64(0)
+	t23 := float64(0)
+	t24 := float64(0)
+	t25 := float64(0)
+	t26 := float64(0)
+	t27 := float64(0)
+	t28 := float64(0)
+	t29 := float64(0)
+	t30 := float64(0)
 	b0 := b[0]
 	b1 := b[1]
 	b2 := b[2]
@@ -524,104 +526,104 @@ func M(o *[16]int64, a [16]int64, b [16]int64) {
 	// first car
 	c = 1
 	v = t0 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t0 = v - c*65536
 	v = t1 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t1 = v - c*65536
 	v = t2 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t2 = v - c*65536
 	v = t3 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t3 = v - c*65536
 	v = t4 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t4 = v - c*65536
 	v = t5 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t5 = v - c*65536
 	v = t6 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t6 = v - c*65536
 	v = t7 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t7 = v - c*65536
 	v = t8 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t8 = v - c*65536
 	v = t9 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t9 = v - c*65536
 	v = t10 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t10 = v - c*65536
 	v = t11 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t11 = v - c*65536
 	v = t12 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t12 = v - c*65536
 	v = t13 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t13 = v - c*65536
 	v = t14 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t14 = v - c*65536
 	v = t15 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t15 = v - c*65536
 	t0 += c - 1 + 37*(c-1)
 
 	// second car
 	c = 1
 	v = t0 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t0 = v - c*65536
 	v = t1 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t1 = v - c*65536
 	v = t2 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t2 = v - c*65536
 	v = t3 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t3 = v - c*65536
 	v = t4 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t4 = v - c*65536
 	v = t5 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t5 = v - c*65536
 	v = t6 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t6 = v - c*65536
 	v = t7 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t7 = v - c*65536
 	v = t8 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t8 = v - c*65536
 	v = t9 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t9 = v - c*65536
 	v = t10 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t10 = v - c*65536
 	v = t11 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t11 = v - c*65536
 	v = t12 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t12 = v - c*65536
 	v = t13 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t13 = v - c*65536
 	v = t14 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t14 = v - c*65536
 	v = t15 + c + 65535
-	c = v / 65536
+	c = math.Floor(v / 65536)
 	t15 = v - c*65536
 	t0 += c - 1 + 37*(c-1)
 	o[0] = t0
@@ -642,7 +644,7 @@ func M(o *[16]int64, a [16]int64, b [16]int64) {
 	o[15] = t15
 }
 
-func S(o *[16]int64, a [16]int64) {
+func S(o *[16]float64, a [16]float64) {
 	M(o, a, a)
 }
 
@@ -654,7 +656,7 @@ func vn(x []byte, xi int, y []byte, yi int, n int) bool {
 	return ((1 & ((d - 1) >> 8)) - 1) == 1
 }
 
-func pow2523(o *[16]int64, i [16]int64) {
+func pow2523(o *[16]float64, i [16]float64) {
 	c := gf(nil)
 	for a := 0; a < 16; a++ {
 		c[a] = i[a]
@@ -671,7 +673,7 @@ func pow2523(o *[16]int64, i [16]int64) {
 }
 
 //i is 8 byte array
-func inv25519(o *[16]int64, i [16]int64) {
+func inv25519(o *[16]float64, i [16]float64) {
 	c := gf(nil)
 	for a := 0; a < 16; a++ {
 		c[a] = i[a]
@@ -686,34 +688,33 @@ func inv25519(o *[16]int64, i [16]int64) {
 		o[a] = c[a]
 	}
 }
-func set25519(r *[16]int64, a [16]int64) {
+func set25519(r *[16]float64, a [16]float64) {
 	for i := 0; i < 16; i++ {
 		r[i] = a[i]
 	}
 }
 
-func car25519(o *[16]int64) {
-	c := int64(1)
-	var v int64
+func car25519(o *[16]float64) {
+	c := float64(1)
+	var v float64
 	for i := 0; i < 16; i++ {
 		v = o[i] + c + 65535
-		c = v / 65536
+		c = math.Floor(v / 65536)
 		o[i] = v - c*65536
 	}
 	o[0] += c - 1 + 37*(c-1)
 }
 
-func sel25519(p *[16]int64, q *[16]int64, b int) {
-	var t int64
-	c := ^(b - 1)
+func sel25519(p *[16]float64, q *[16]float64, b float64) {
+	c := ^math.Float64bits(b - 1)
 	for i := 0; i < 16; i++ {
-		t = int64(c) & (p[i] ^ q[i])
-		p[i] ^= t
-		q[i] ^= t
+		t := c & (math.Float64bits(p[i]) ^ math.Float64bits(q[i]))
+		p[i] = math.Float64frombits(math.Float64bits(p[i]) ^ t)
+		q[i] = math.Float64frombits(math.Float64bits(q[i]) ^ t)
 	}
 }
 
-func pack25519(o *[32]byte, n [16]int64) {
+func pack25519(o *[32]byte, n [16]float64) {
 	m := gf(nil)
 	t := n
 	car25519(&t)
@@ -722,18 +723,18 @@ func pack25519(o *[32]byte, n [16]int64) {
 	for j := 0; j < 2; j++ {
 		m[0] = t[0] - 0xffed
 		for i := 1; i < 15; i++ {
-			m[i] = t[i] - 0xffff - ((m[i-1] >> 16) & 1)
-			m[i-1] &= 0xffff
+			m[i] = t[i] - 0xffff - math.Float64frombits((math.Float64bits(m[i-1])>>16)&1)
+			m[i-1] = math.Float64frombits(math.Float64bits(m[i-1]) & 0xffff)
 		}
-		m[15] = t[15] - 0x7fff - ((m[14] >> 16) & 1)
-		b := (m[15] >> 16) & 1
-		m[14] &= 0xffff
-		sel25519(&t, &m, int(1-b))
+		m[15] = t[15] - 0x7fff - math.Float64frombits((math.Float64bits(m[14])>>16)&1)
+		b := math.Float64frombits((math.Float64bits(m[15]) >> 16) & 1)
+		m[14] = math.Float64frombits(math.Float64bits(m[14]) & 0xffff)
+		sel25519(&t, &m, 1-b)
 	}
 	for i := 0; i < 16; i++ { //VERIFY THIS!!!!!!!
 
-		o[2*i] = byte(t[i])        //truncate
-		o[2*i+1] = byte(t[i] >> 8) //truncate
+		o[2*i] = byte(t[i])                          //truncate
+		o[2*i+1] = byte(math.Float64bits(t[i]) >> 8) //truncate
 		/* original
 		o[2 * i] = t[i] & 0xff;
 		o[2 * i + 1] = t[i] >> 8;
@@ -744,13 +745,13 @@ func pack25519(o *[32]byte, n [16]int64) {
 	}
 }
 
-func cswap(p *[4][16]int64, q *[4][16]int64, b int) {
+func cswap(p *[4][16]float64, q *[4][16]float64, b float64) {
 	for i := 0; i < 4; i++ {
 		sel25519(&p[i], &q[i], b)
 	}
 }
 
-func neq25519(a [16]int64, b [16]int64) bool {
+func neq25519(a [16]float64, b [16]float64) bool {
 	c := [32]byte{}
 	d := [32]byte{}
 	pack25519(&c, a)
@@ -758,16 +759,16 @@ func neq25519(a [16]int64, b [16]int64) bool {
 	return crypto_verify_32(c, 0, d, 0)
 }
 
-func par25519(a [16]int64) byte {
+func par25519(a [16]float64) byte {
 	d := [32]byte{}
 	pack25519(&d, a)
 	return d[0] & 1
 }
-func unpack25519(o *[16]int64, n [32]byte) {
+func unpack25519(o *[16]float64, n [32]byte) {
 	for i := 0; i < 16; i++ {
-		o[i] = int64(n[2*i]) + (int64(n[2*i+1]) << 8)
+		o[i] = float64(n[2*i]) + math.Float64frombits(math.Float64bits(float64(n[2*i+1]))<<8)
 	}
-	o[15] &= 0x7fff
+	o[15] = math.Float64frombits(math.Float64bits(o[15]) & 0x7fff)
 }
 
 func crypto_verify_32(x [32]byte, xi int, y [32]byte, yi int) bool {
@@ -775,7 +776,7 @@ func crypto_verify_32(x [32]byte, xi int, y [32]byte, yi int) bool {
 	return vn(x[:], xi, y[:], yi, 32)
 }
 
-func add(p *[4][16]int64, q *[4][16]int64) {
+func add(p *[4][16]float64, q *[4][16]float64) {
 	a := gf(nil)
 	b := gf(nil)
 	c := gf(nil)
@@ -806,7 +807,7 @@ func add(p *[4][16]int64, q *[4][16]int64) {
 	M(&p[3], e, h)
 }
 
-func pack(r *[32]byte, p [4][16]int64) {
+func pack(r *[32]byte, p [4][16]float64) {
 	tx := gf(nil)
 	ty := gf(nil)
 	zi := gf(nil)
@@ -817,15 +818,13 @@ func pack(r *[32]byte, p [4][16]int64) {
 	r[31] ^= par25519(tx) << 7
 }
 
-func scalarmult(p *[4][16]int64, q *[4][16]int64, s [32]byte) {
-	var b int
+func scalarmult(p *[4][16]float64, q *[4][16]float64, s [32]byte) {
 	set25519(&p[0], gf0)
 	set25519(&p[1], gf1)
 	set25519(&p[2], gf1)
 	set25519(&p[3], gf0)
 	for i := 254; i >= 0; i-- {
-
-		b = (int(s[(i/8)]) >> (i & 7)) & 1
+		b := math.Float64frombits((math.Float64bits(float64(s[(i/8)])) >> (i & 7)) & 1)
 		cswap(p, q, b)
 		add(q, p)
 		add(p, p)
@@ -833,7 +832,7 @@ func scalarmult(p *[4][16]int64, q *[4][16]int64, s [32]byte) {
 	}
 }
 
-func unpack(r *[4][16]int64, p [32]byte) int {
+func unpack(r *[4][16]float64, p [32]byte) int {
 	t := gf(nil)
 	chk := gf(nil)
 	num := gf(nil)
