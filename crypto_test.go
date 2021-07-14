@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"encoding/hex"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -59,26 +58,28 @@ func TestHashesRipemd160(t *testing.T) {
 }
 
 func TestEncryptDecryptGCM(t *testing.T) {
-	sender, _ := NewRandomKeyPair()
-	recipient, _ := NewRandomKeyPair()
-	iv := MathUtils.GetRandomByteArray(12)
-	encoded, err := encodeMessage(*sender.PrivateKey, *recipient.PublicKey, "This is a random test message that must match forever and ever.", iv)
-	if err != nil {
-		panic(fmt.Sprintf("Unable to encode message: %s", err))
-	}
-	decoded, err := decodeMessage(*recipient.PrivateKey, *sender.PublicKey, encoded, iv)
-	if err != nil {
-		panic(fmt.Sprintf("Unable to decode message: %s", err))
-	}
-	fmt.Print(decoded)
+	sender, err := NewRandomKeyPair()
+	assert.Nil(t, err)
+	recipient, err := NewRandomKeyPair()
+	assert.Nil(t, err)
+	startMessage := "This is a random test message that must match forever and ever."
+	encoded, err := encodeMessage(sender.PrivateKey, recipient.PublicKey, startMessage)
+	assert.Nil(t, err)
+	decodedStr, err := hex.DecodeString(encoded)
+	assert.Nil(t, err)
+	decoded, err := decodeMessage(recipient.PrivateKey, sender.PublicKey, decodedStr)
+	assert.Nil(t, err)
+	assert.Equal(t, startMessage, decoded)
 }
 
-func TestDerivedKeyCompat(t *testing.T) {
-	sender, _ := NewRandomKeyPair()
-	recipient, _ := NewRandomKeyPair()
-	sharedKey := deriveSharedKey(sender.PrivateKey.Raw, recipient.PublicKey.Raw)
-	sharedKey2 := deriveSharedKey(recipient.PrivateKey.Raw, sender.PublicKey.Raw)
-	fmt.Printf("a %x", sharedKey)
-	fmt.Printf("b %x", sharedKey2)
+func TestDerivedKeyCompatFixedKeys(t *testing.T) {
+	sender, err := NewRandomKeyPair()
+	assert.Nil(t, err)
+	recipient, err := NewRandomKeyPair()
+	assert.Nil(t, err)
+	salt := MathUtils.GetRandomByteArray(32)
+	cipher := NewEd25519BlockCipher(sender, recipient, nil)
+	sharedKey, err := cipher.GetSharedKey(sender.PrivateKey, recipient.PublicKey, salt)
+	sharedKey2, err := cipher.GetSharedKey(recipient.PrivateKey, sender.PublicKey, salt)
 	assert.Equal(t, sharedKey, sharedKey2)
 }
