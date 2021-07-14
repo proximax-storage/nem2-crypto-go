@@ -131,7 +131,7 @@ func deriveSharedSecret(privateKey []byte, publicKey []byte) [32]byte {
 func deriveSharedKey(privateKey []byte, publicKey []byte) []byte {
 	sharedSecret := deriveSharedSecret(privateKey, publicKey)
 	// Underlying hash function for HMAC.
-	hash := sha256.New
+	hash := sha3.New256
 
 	// Non-secret salt, optional (can be nil).
 	// Recommended: hash-length random value.
