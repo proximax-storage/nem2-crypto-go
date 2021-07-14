@@ -74,23 +74,15 @@ func TestEncryptDecryptGCM(t *testing.T) {
 	if err != nil {
 		panic(fmt.Sprintf("Unable to decode message: %s", err))
 	}
-	fmt.Print(startMessage)
-	fmt.Print(decoded)
 	assert.Equal(t, startMessage, decoded)
 }
 
 func TestDerivedKeyCompatFixedKeys(t *testing.T) {
-	senderpriv, _ := NewPrivateKeyfromHexString("4d4296a0520fbddca4e1646fc0a9f925a3393dbc535a0c41f01057bedb5f4f64")
-	receiverpriv, _ := NewPrivateKeyfromHexString("c6638ba0981161967b67e9f45eca27b3d94c4261dece9c93259879824cc176b4")
-	sender, _ := NewKeyPair(senderpriv, nil, nil)
-	recipient, _ := NewKeyPair(receiverpriv, nil, nil)
+	sender, _ := NewRandomKeyPair()
+	recipient, _ := NewRandomKeyPair()
 	salt := MathUtils.GetRandomByteArray(32)
 	cipher := NewEd25519BlockCipher(sender, recipient, nil)
 	sharedKey, _ := cipher.GetSharedKey(sender.PrivateKey, recipient.PublicKey, salt)
 	sharedKey2, _ := cipher.GetSharedKey(recipient.PrivateKey, sender.PublicKey, salt)
-	fmt.Printf("a %s\n", sender.PrivateKey.String())
-	fmt.Printf("b %s\n", recipient.PrivateKey.String())
-	fmt.Printf("a %x", sharedKey)
-	fmt.Printf("b %x", sharedKey2)
 	assert.Equal(t, sharedKey, sharedKey2)
 }
