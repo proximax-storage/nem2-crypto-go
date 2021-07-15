@@ -96,7 +96,7 @@ func isEqualConstantTime(x, y []byte) bool {
 	return subtle.ConstantTimeCompare(x, y) == 1
 }
 
-func encodeMessageEd25519(senderPrivateKey *PrivateKey, recipientPublicKey *PublicKey, message string) (string, error) {
+func EncodeMessageEd25519(senderPrivateKey *PrivateKey, recipientPublicKey *PublicKey, message string) (string, error) {
 
 	sender, _ := NewKeyPair(senderPrivateKey, nil, nil)
 	recipient, _ := NewKeyPair(nil, recipientPublicKey, nil)
@@ -109,7 +109,7 @@ func encodeMessageEd25519(senderPrivateKey *PrivateKey, recipientPublicKey *Publ
 	return hex.EncodeToString(plainText), nil
 }
 
-func decodeMessageEd25519(recipientPrivateKey *PrivateKey, senderPublicKey *PublicKey, payload []byte) (string, error) {
+func DecodeMessageEd25519(recipientPrivateKey *PrivateKey, senderPublicKey *PublicKey, payload []byte) (string, error) {
 
 	recipient, _ := NewKeyPair(recipientPrivateKey, nil, nil)
 	sender, _ := NewKeyPair(nil, senderPublicKey, nil)
@@ -121,7 +121,7 @@ func decodeMessageEd25519(recipientPrivateKey *PrivateKey, senderPublicKey *Publ
 	return string(plainText), nil
 }
 
-func encodeMessageNaCl(senderPrivateKey *PrivateKey, recipientPublicKey *PublicKey, message string, salt []byte) (string, error) {
+func EncodeMessageNaCl(senderPrivateKey *PrivateKey, recipientPublicKey *PublicKey, message string, salt []byte) (string, error) {
 
 	var fsalt []byte
 	if salt != nil {
@@ -149,7 +149,7 @@ func encodeMessageNaCl(senderPrivateKey *PrivateKey, recipientPublicKey *PublicK
 	return hex.EncodeToString(cipherText[len(cipherText)-mode.Overhead():]) + hex.EncodeToString(ivData) + hex.EncodeToString(cipherText[:len(cipherText)-mode.Overhead()]), nil
 }
 
-func decodeMessageNaCl(recipientPrivateKey *PrivateKey, senderPublicKey *PublicKey, payload []byte, salt []byte) (string, error) {
+func DecodeMessageNaCl(recipientPrivateKey *PrivateKey, senderPublicKey *PublicKey, payload []byte, salt []byte) (string, error) {
 	var fsalt []byte
 	if salt != nil {
 		copy(fsalt, salt)
