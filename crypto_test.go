@@ -57,24 +57,39 @@ func TestHashesRipemd160(t *testing.T) {
 	assert.Equal(t, "3fc43d717d824302e3821de8129ea2f7786912e5", hex.EncodeToString(secretB))
 }
 
-func TestEncryptDecryptGCM(t *testing.T) {
+func TestEncryptDecryptGCMDefault(t *testing.T) {
 	sender, err := NewRandomKeyPair()
 	assert.Nil(t, err)
 	recipient, err := NewRandomKeyPair()
 	assert.Nil(t, err)
 	startMessage := "This is a random test message that must match forever and ever."
-	encoded, err := encodeMessage(sender.PrivateKey, recipient.PublicKey, startMessage)
+	encoded, err := encodeMessageEd25519(sender.PrivateKey, recipient.PublicKey, startMessage)
 	assert.Nil(t, err)
 	decodedStr, err := hex.DecodeString(encoded)
 	assert.Nil(t, err)
-	decoded, err := decodeMessage(recipient.PrivateKey, sender.PublicKey, decodedStr)
+	decoded, err := decodeMessageEd25519(recipient.PrivateKey, sender.PublicKey, decodedStr)
+	assert.Nil(t, err)
+	assert.Equal(t, startMessage, decoded)
+}
+
+func TestEncryptDecryptGCMNaCl(t *testing.T) {
+	sender, err := NewRandomKeyPair()
+	assert.Nil(t, err)
+	recipient, err := NewRandomKeyPair()
+	assert.Nil(t, err)
+	startMessage := "This is a random test message that must match forever and ever. Now adding messages to use more than one block :D. This is a random test message that must match forever and ever. This is a random test message that must match forever and ever. This is a random test message that must match forever and ever.This is a random test message that must match forever and ever.This is a random test message that must match forever and ever.This is a random test message that must match forever and ever.This is a random test message that must match forever and ever.This is a random test message that must match forever and ever.This is a random test message that must match forever and ever.This is a random test message that must match forever and ever."
+	encoded, err := encodeMessageNaCl(sender.PrivateKey, recipient.PublicKey, startMessage, nil)
+	assert.Nil(t, err)
+	decodedStr, err := hex.DecodeString(encoded)
+	assert.Nil(t, err)
+	decoded, err := decodeMessageNaCl(recipient.PrivateKey, sender.PublicKey, decodedStr, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, startMessage, decoded)
 }
 func TestDerivedKeyCompatNaCl(t *testing.T) {
 	sender, _ := NewRandomKeyPair()
 	recipient, _ := NewRandomKeyPair()
-	salt := MathUtils.GetRandomByteArray(32)
+	salt := make([]byte, 32) //zeroed salt
 	sharedKey := deriveSharedKey(sender.PrivateKey.Raw, recipient.PublicKey.Raw, salt)
 	sharedKey2 := deriveSharedKey(recipient.PrivateKey.Raw, sender.PublicKey.Raw, salt)
 	assert.Equal(t, sharedKey, sharedKey2)
@@ -85,7 +100,7 @@ func TestDerivedKeyCompatDefault(t *testing.T) {
 	assert.Nil(t, err)
 	recipient, err := NewRandomKeyPair()
 	assert.Nil(t, err)
-	salt := MathUtils.GetRandomByteArray(32)
+	salt := make([]byte, 32) //zeroed salt
 	cipher := NewEd25519BlockCipher(sender, recipient, nil)
 	sharedKey, err := cipher.GetSharedKey(sender.PrivateKey, recipient.PublicKey, salt)
 	assert.Nil(t, err)
@@ -99,7 +114,7 @@ func TestDerivedKeyCompatNaClMatchesEd25519Impl(t *testing.T) {
 	assert.Nil(t, err)
 	recipient, err := NewRandomKeyPair()
 	assert.Nil(t, err)
-	salt := MathUtils.GetRandomByteArray(32)
+	salt := make([]byte, 32) //zeroed salt
 	cipher := NewEd25519BlockCipher(sender, recipient, nil)
 	sharedKey, err := cipher.GetSharedKey(sender.PrivateKey, recipient.PublicKey, salt)
 	assert.Nil(t, err)

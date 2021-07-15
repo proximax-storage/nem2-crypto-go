@@ -5,6 +5,8 @@
 package crypto
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/hex"
@@ -94,7 +96,7 @@ func isEqualConstantTime(x, y []byte) bool {
 	return subtle.ConstantTimeCompare(x, y) == 1
 }
 
-func encodeMessage(senderPrivateKey *PrivateKey, recipientPublicKey *PublicKey, message string) (string, error) {
+func encodeMessageEd25519(senderPrivateKey *PrivateKey, recipientPublicKey *PublicKey, message string) (string, error) {
 
 	sender, _ := NewKeyPair(senderPrivateKey, nil, nil)
 	recipient, _ := NewKeyPair(nil, recipientPublicKey, nil)
@@ -107,7 +109,7 @@ func encodeMessage(senderPrivateKey *PrivateKey, recipientPublicKey *PublicKey, 
 	return hex.EncodeToString(plainText), nil
 }
 
-func decodeMessage(recipientPrivateKey *PrivateKey, senderPublicKey *PublicKey, payload []byte) (string, error) {
+func decodeMessageEd25519(recipientPrivateKey *PrivateKey, senderPublicKey *PublicKey, payload []byte) (string, error) {
 
 	recipient, _ := NewKeyPair(recipientPrivateKey, nil, nil)
 	sender, _ := NewKeyPair(nil, senderPublicKey, nil)
@@ -119,6 +121,64 @@ func decodeMessage(recipientPrivateKey *PrivateKey, senderPublicKey *PublicKey, 
 	return string(plainText), nil
 }
 
+func encodeMessageNaCl(senderPrivateKey *PrivateKey, recipientPublicKey *PublicKey, message string, salt []byte) (string, error) {
+
+	var fsalt []byte
+	if salt != nil {
+		copy(fsalt, salt)
+	} else {
+		fsalt = make([]byte, 32)
+	}
+	encryptionKey := deriveSharedKey(senderPrivateKey.Raw, recipientPublicKey.Raw, fsalt)
+
+	// Setup IV.
+	ivData := MathUtils.GetRandomByteArray(12)
+
+	// Encode.
+	plainText := []byte(message)
+
+	block, err := aes.NewCipher(encryptionKey)
+	if err != nil {
+		return "", err
+	}
+	mode, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+	cipherText := mode.Seal(nil, ivData, plainText, nil)
+	return hex.EncodeToString(cipherText[len(cipherText)-mode.Overhead():]) + hex.EncodeToString(ivData) + hex.EncodeToString(cipherText[:len(cipherText)-mode.Overhead()]), nil
+}
+
+func decodeMessageNaCl(recipientPrivateKey *PrivateKey, senderPublicKey *PublicKey, payload []byte, salt []byte) (string, error) {
+	var fsalt []byte
+	if salt != nil {
+		copy(fsalt, salt)
+	} else {
+		fsalt = make([]byte, 32)
+	}
+	encryptionKey := deriveSharedKey(recipientPrivateKey.Raw, senderPublicKey.Raw, fsalt)
+
+	// Decode .
+
+	block, err := aes.NewCipher(encryptionKey)
+	if err != nil {
+		return "", err
+	}
+
+	mode, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+	ivData := payload[16:28]
+	encTag := payload[0:16]
+	cipherText := append(payload[28:], encTag...)
+
+	decodedText, err := mode.Open(nil, ivData, cipherText, nil)
+	if err != nil {
+		return "", err
+	}
+	return string(decodedText), nil
+}
 func PrepareForScalarMult(sk []byte) []byte {
 	hash, err := HashesSha3_512(sk)
 	if err != nil {
