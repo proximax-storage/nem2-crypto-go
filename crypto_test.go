@@ -2,8 +2,10 @@ package crypto
 
 import (
 	"encoding/hex"
-	"github.com/stretchr/testify/assert"
+	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHashesSha_256(t *testing.T) {
@@ -54,4 +56,76 @@ func TestHashesRipemd160(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, "3fc43d717d824302e3821de8129ea2f7786912e5", hex.EncodeToString(secretB))
+}
+
+func TestEncryptDecryptGCMDefault(t *testing.T) {
+	sender, err := NewRandomKeyPair()
+	assert.Nil(t, err)
+	recipient, err := NewRandomKeyPair()
+	assert.Nil(t, err)
+	startMessage := "This is a random test message that must match forever and ever."
+	encoded, err := EncodeMessageEd25519(sender.PrivateKey, recipient.PublicKey, startMessage)
+	assert.Nil(t, err)
+	decodedStr, err := hex.DecodeString(encoded)
+	assert.Nil(t, err)
+	decoded, err := DecodeMessageEd25519(recipient.PrivateKey, sender.PublicKey, decodedStr)
+	assert.Nil(t, err)
+	assert.Equal(t, startMessage, decoded)
+}
+
+func TestEncryptDecryptGCMNaCl(t *testing.T) {
+	sender, err := NewRandomKeyPair()
+	assert.Nil(t, err)
+	recipient, err := NewRandomKeyPair()
+	assert.Nil(t, err)
+	startMessage := "This is a random test message that must match forever and ever. Now adding messages to use more than one block :D. This is a random test message that must match forever and ever. This is a random test message that must match forever and ever. This is a random test message that must match forever and ever.This is a random test message that must match forever and ever.This is a random test message that must match forever and ever.This is a random test message that must match forever and ever.This is a random test message that must match forever and ever.This is a random test message that must match forever and ever.This is a random test message that must match forever and ever.This is a random test message that must match forever and ever."
+	encoded, err := EncodeMessageNaCl(sender.PrivateKey, recipient.PublicKey, startMessage, nil)
+	assert.Nil(t, err)
+	decodedStr, err := hex.DecodeString(encoded)
+	assert.Nil(t, err)
+	decoded, err := DecodeMessageNaCl(recipient.PrivateKey, sender.PublicKey, decodedStr, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, startMessage, decoded)
+}
+func TestDerivedKeyCompatNaCl(t *testing.T) {
+	sender, _ := NewRandomKeyPair()
+	recipient, _ := NewRandomKeyPair()
+	salt := make([]byte, 32) //zeroed salt
+	sharedKey := deriveSharedKey(sender.PrivateKey.Raw, recipient.PublicKey.Raw, salt)
+	sharedKey2 := deriveSharedKey(recipient.PrivateKey.Raw, sender.PublicKey.Raw, salt)
+	assert.Equal(t, sharedKey, sharedKey2)
+}
+
+func TestDerivedKeyCompatDefault(t *testing.T) {
+	sender, err := NewRandomKeyPair()
+	assert.Nil(t, err)
+	recipient, err := NewRandomKeyPair()
+	assert.Nil(t, err)
+	salt := make([]byte, 32) //zeroed salt
+	cipher := NewEd25519BlockCipher(sender, recipient, nil)
+	sharedKey, err := cipher.GetSharedKey(sender.PrivateKey, recipient.PublicKey, salt)
+	assert.Nil(t, err)
+	sharedKey2, err := cipher.GetSharedKey(recipient.PrivateKey, sender.PublicKey, salt)
+	assert.Nil(t, err)
+	assert.Equal(t, sharedKey, sharedKey2)
+}
+
+func TestDerivedKeyCompatNaClMatchesEd25519Impl(t *testing.T) {
+	sender, err := NewRandomKeyPair()
+	assert.Nil(t, err)
+	recipient, err := NewRandomKeyPair()
+	assert.Nil(t, err)
+	salt := make([]byte, 32) //zeroed salt
+	cipher := NewEd25519BlockCipher(sender, recipient, nil)
+	sharedKey, err := cipher.GetSharedKey(sender.PrivateKey, recipient.PublicKey, salt)
+	assert.Nil(t, err)
+	sharedKey2, err := cipher.GetSharedKey(recipient.PrivateKey, sender.PublicKey, salt)
+	assert.Nil(t, err)
+	sharedKey3 := deriveSharedKey(sender.PrivateKey.Raw, recipient.PublicKey.Raw, salt)
+	sharedKey4 := deriveSharedKey(recipient.PrivateKey.Raw, sender.PublicKey.Raw, salt)
+	fmt.Printf("%x,%x\n%x,%x", sharedKey, sharedKey2, sharedKey3, sharedKey4)
+	assert.Equal(t, sharedKey, sharedKey2)
+	assert.Equal(t, sharedKey3, sharedKey4)
+	assert.Equal(t, sharedKey, sharedKey3)
+
 }

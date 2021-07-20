@@ -11,9 +11,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+
+	"golang.org/x/crypto/hkdf"
+	"golang.org/x/crypto/sha3"
 )
 
-//Ed25519SeedCryptoEngine wraps a cryptographic engine ed25519 and seed for this engine
+// Ed25519SeedCryptoEngine wraps a cryptographic engine ed25519 and seed for this engine
 type Ed25519SeedCryptoEngine struct {
 	seed io.Reader
 }
@@ -116,6 +119,39 @@ func (ref *Ed25519BlockCipher) decode(ciphertext []byte, sharedKey []byte, ivDat
 	return buf[:messageSize], nil
 }
 
+func (ref *Ed25519BlockCipher) encodeGCM(message []byte, sharedKey []byte, ivData []byte) ([]byte, error) {
+	plainText := []byte(message)
+
+	block, err := aes.NewCipher(sharedKey)
+	if err != nil {
+		return nil, err
+	}
+	mode, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	cipherText := mode.Seal(nil, ivData, plainText, nil)
+	return cipherText, nil
+}
+
+func (ref *Ed25519BlockCipher) decodeGCM(ciphertext []byte, sharedKey []byte, ivData []byte) ([]byte, error) {
+	block, err := aes.NewCipher(sharedKey)
+	if err != nil {
+		return nil, err
+	}
+
+	aesgcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	plainText, err := aesgcm.Open(nil, ivData, ciphertext, nil)
+	if err != nil {
+		return nil, err
+	}
+	return plainText, nil
+}
+
 // GetSharedKey create shared bytes
 func (ref *Ed25519BlockCipher) GetSharedKey(privateKey *PrivateKey, publicKey *PublicKey, salt []byte) ([]byte, error) {
 
@@ -141,6 +177,81 @@ func (ref *Ed25519BlockCipher) GetSharedKey(privateKey *PrivateKey, publicKey *P
 	}
 
 	return HashesSha3_256(sharedKey.Raw)
+}
+
+// GetSharedKey create shared bytes
+func (ref *Ed25519BlockCipher) GetSharedKeyHMac(privateKey *PrivateKey, publicKey *PublicKey, salt []byte) ([]byte, error) {
+
+	grA, err := NewEd25519EncodedGroupElement(publicKey.Raw)
+	if err != nil {
+		return nil, err
+	}
+	senderA, err := grA.Decode()
+	if err != nil {
+		return nil, err
+	}
+	senderA.PrecomputeForScalarMultiplication()
+	el, err := senderA.scalarMultiply(PrepareForScalarMultiply(privateKey))
+	if err != nil {
+		return nil, err
+	}
+	sharedKey, err := el.Encode()
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < ref.keyLength; i++ {
+		sharedKey.Raw[i] ^= salt[i]
+	}
+	resultStream := hkdf.New(sha3.New256, sharedKey.Raw, salt, []byte("catapult"))
+	key := make([]byte, 32)
+	if _, err := io.ReadFull(resultStream, key); err != nil {
+		return nil, err
+	}
+	return key, nil
+}
+
+// Encrypt slice byte
+
+func (ref *Ed25519BlockCipher) EncryptGCM(input []byte) ([]byte, error) {
+	// Setup salt.
+	salt := make([]byte, ref.keyLength)
+
+	// Derive shared key.
+	sharedKey, err := ref.GetSharedKeyHMac(ref.senderKeyPair.PrivateKey, ref.recipientKeyPair.PublicKey, salt)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("Shared key: %x", sharedKey)
+	// Setup IV.
+	ivData := MathUtils.GetRandomByteArray(12)
+
+	// Encode.
+	buf, err := ref.encodeGCM(input, sharedKey, ivData)
+	if err != nil {
+		return nil, err
+	}
+
+	result := append(append(buf[len(buf)-16:], ivData...), buf[:len(buf)-16]...)
+
+	return result, nil
+}
+
+// Decrypt slice byte
+func (ref *Ed25519BlockCipher) DecryptGCM(input []byte) ([]byte, error) {
+	if len(input) < 64 {
+		return nil, errors.New("input is to short for decryption")
+	}
+	salt := make([]byte, ref.keyLength)
+	tag := input[:16]
+	ivData := input[16 : 16+12]
+	encData := append(input[28:], tag[:]...)
+	// Derive shared key.
+	sharedKey, err := ref.GetSharedKeyHMac(ref.recipientKeyPair.PrivateKey, ref.senderKeyPair.PublicKey, salt)
+	if err != nil {
+		return nil, err
+	}
+	// Decode.
+	return ref.decodeGCM(encData, sharedKey, ivData)
 }
 
 // Encrypt slice byte
@@ -197,7 +308,7 @@ type Ed25519DsaSigner struct {
 	KeyPair *KeyPair
 }
 
-//NewEd25519DsaSigner creates a Ed25519 DSA signer.
+// NewEd25519DsaSigner creates a Ed25519 DSA signer.
 func NewEd25519DsaSigner(keyPair *KeyPair) *Ed25519DsaSigner {
 	return &Ed25519DsaSigner{keyPair}
 }
@@ -341,7 +452,7 @@ func (ref *Ed25519DsaSigner) MakeSignatureCanonical(signature *Signature) (*Sign
 	return NewSignature(signature.R, sModQ.Raw)
 }
 
-//Ed25519KeyGenerator Implementation of the key generator for Ed25519.
+// Ed25519KeyGenerator Implementation of the key generator for Ed25519.
 type Ed25519KeyGenerator struct {
 	seed io.Reader
 }
