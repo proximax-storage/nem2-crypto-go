@@ -214,29 +214,22 @@ func (ref *Ed25519BlockCipher) GetSharedKeyHMac(privateKey *PrivateKey, publicKe
 func (ref *Ed25519BlockCipher) EncryptGCM(input []byte) ([]byte, error) {
 	// Setup salt.
 	salt := make([]byte, ref.keyLength)
-	_, err := io.ReadFull(ref.seed, salt)
-	if err != nil {
-		return nil, err
-	}
 
 	// Derive shared key.
-	sharedKey, err := ref.GetSharedKey(ref.senderKeyPair.PrivateKey, ref.recipientKeyPair.PublicKey, salt)
+	sharedKey, err := ref.GetSharedKeyHMac(ref.senderKeyPair.PrivateKey, ref.recipientKeyPair.PublicKey, salt)
 	if err != nil {
 		return nil, err
 	}
 	// Setup IV.
-	ivData := make([]byte, 12)
-	_, err = io.ReadFull(ref.seed, ivData)
-	if err != nil {
-		return nil, err
-	}
+	ivData := MathUtils.GetRandomByteArray(12)
+
 	// Encode.
 	buf, err := ref.encodeGCM(input, sharedKey, ivData)
 	if err != nil {
 		return nil, err
 	}
 
-	result := append(append(salt, ivData...), buf...)
+	result := append(append(buf[len(buf)-16:], ivData...), buf[:len(buf)-16]...)
 
 	return result, nil
 }
@@ -246,12 +239,12 @@ func (ref *Ed25519BlockCipher) DecryptGCM(input []byte) ([]byte, error) {
 	if len(input) < 64 {
 		return nil, errors.New("input is to short for decryption")
 	}
-
-	salt := input[:ref.keyLength]
-	ivData := input[ref.keyLength : ref.keyLength+12]
-	encData := input[ref.keyLength+12:]
+	salt := make([]byte, ref.keyLength)
+	tag := input[:16]
+	ivData := input[16 : 16+12]
+	encData := append(input[28:], tag[:]...)
 	// Derive shared key.
-	sharedKey, err := ref.GetSharedKey(ref.recipientKeyPair.PrivateKey, ref.senderKeyPair.PublicKey, salt)
+	sharedKey, err := ref.GetSharedKeyHMac(ref.recipientKeyPair.PrivateKey, ref.senderKeyPair.PublicKey, salt)
 	if err != nil {
 		return nil, err
 	}
