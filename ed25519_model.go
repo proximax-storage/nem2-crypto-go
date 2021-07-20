@@ -221,6 +221,7 @@ func (ref *Ed25519BlockCipher) EncryptGCM(input []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("Shared key: %x", sharedKey)
 	// Setup IV.
 	ivData := MathUtils.GetRandomByteArray(12)
 
