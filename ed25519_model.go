@@ -199,9 +199,6 @@ func (ref *Ed25519BlockCipher) GetSharedKeyHMac(privateKey *PrivateKey, publicKe
 	if err != nil {
 		return nil, err
 	}
-	for i := 0; i < ref.keyLength; i++ {
-		sharedKey.Raw[i] ^= salt[i]
-	}
 	resultStream := hkdf.New(sha3.New256, sharedKey.Raw, salt, []byte("catapult"))
 	key := make([]byte, 32)
 	if _, err := io.ReadFull(resultStream, key); err != nil {
