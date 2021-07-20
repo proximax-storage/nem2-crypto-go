@@ -211,6 +211,7 @@ func (ref *Ed25519BlockCipher) GetSharedKeyHMac(privateKey *PrivateKey, publicKe
 }
 
 // Encrypt slice byte
+
 func (ref *Ed25519BlockCipher) EncryptGCM(input []byte) ([]byte, error) {
 	// Setup salt.
 	salt := make([]byte, ref.keyLength)
