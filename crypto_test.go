@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -63,11 +64,11 @@ func TestEncryptDecryptGCMDefault(t *testing.T) {
 	recipient, err := NewRandomKeyPair()
 	assert.Nil(t, err)
 	startMessage := "This is a random test message that must match forever and ever."
-	encoded, err := encodeMessageEd25519(sender.PrivateKey, recipient.PublicKey, startMessage)
+	encoded, err := EncodeMessageEd25519(sender.PrivateKey, recipient.PublicKey, startMessage)
 	assert.Nil(t, err)
 	decodedStr, err := hex.DecodeString(encoded)
 	assert.Nil(t, err)
-	decoded, err := decodeMessageEd25519(recipient.PrivateKey, sender.PublicKey, decodedStr)
+	decoded, err := DecodeMessageEd25519(recipient.PrivateKey, sender.PublicKey, decodedStr)
 	assert.Nil(t, err)
 	assert.Equal(t, startMessage, decoded)
 }
@@ -78,11 +79,11 @@ func TestEncryptDecryptGCMNaCl(t *testing.T) {
 	recipient, err := NewRandomKeyPair()
 	assert.Nil(t, err)
 	startMessage := "This is a random test message that must match forever and ever. Now adding messages to use more than one block :D. This is a random test message that must match forever and ever. This is a random test message that must match forever and ever. This is a random test message that must match forever and ever.This is a random test message that must match forever and ever.This is a random test message that must match forever and ever.This is a random test message that must match forever and ever.This is a random test message that must match forever and ever.This is a random test message that must match forever and ever.This is a random test message that must match forever and ever.This is a random test message that must match forever and ever."
-	encoded, err := encodeMessageNaCl(sender.PrivateKey, recipient.PublicKey, startMessage, nil)
+	encoded, err := EncodeMessageNaCl(sender.PrivateKey, recipient.PublicKey, startMessage, nil)
 	assert.Nil(t, err)
 	decodedStr, err := hex.DecodeString(encoded)
 	assert.Nil(t, err)
-	decoded, err := decodeMessageNaCl(recipient.PrivateKey, sender.PublicKey, decodedStr, nil)
+	decoded, err := DecodeMessageNaCl(recipient.PrivateKey, sender.PublicKey, decodedStr, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, startMessage, decoded)
 }
@@ -122,6 +123,7 @@ func TestDerivedKeyCompatNaClMatchesEd25519Impl(t *testing.T) {
 	assert.Nil(t, err)
 	sharedKey3 := deriveSharedKey(sender.PrivateKey.Raw, recipient.PublicKey.Raw, salt)
 	sharedKey4 := deriveSharedKey(recipient.PrivateKey.Raw, sender.PublicKey.Raw, salt)
+	fmt.Printf("%x,%x\n%x,%x", sharedKey, sharedKey2, sharedKey3, sharedKey4)
 	assert.Equal(t, sharedKey, sharedKey2)
 	assert.Equal(t, sharedKey3, sharedKey4)
 	assert.Equal(t, sharedKey, sharedKey3)

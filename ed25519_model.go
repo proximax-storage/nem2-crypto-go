@@ -11,6 +11,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+
+	"golang.org/x/crypto/hkdf"
+	"golang.org/x/crypto/sha3"
 )
 
 // Ed25519SeedCryptoEngine wraps a cryptographic engine ed25519 and seed for this engine
@@ -174,6 +177,37 @@ func (ref *Ed25519BlockCipher) GetSharedKey(privateKey *PrivateKey, publicKey *P
 	}
 
 	return HashesSha3_256(sharedKey.Raw)
+}
+
+// GetSharedKey create shared bytes
+func (ref *Ed25519BlockCipher) GetSharedKeyHMac(privateKey *PrivateKey, publicKey *PublicKey, salt []byte) ([]byte, error) {
+
+	grA, err := NewEd25519EncodedGroupElement(publicKey.Raw)
+	if err != nil {
+		return nil, err
+	}
+	senderA, err := grA.Decode()
+	if err != nil {
+		return nil, err
+	}
+	senderA.PrecomputeForScalarMultiplication()
+	el, err := senderA.scalarMultiply(PrepareForScalarMultiply(privateKey))
+	if err != nil {
+		return nil, err
+	}
+	sharedKey, err := el.Encode()
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < ref.keyLength; i++ {
+		sharedKey.Raw[i] ^= salt[i]
+	}
+	resultStream := hkdf.New(sha3.New256, sharedKey.Raw, salt, []byte("catapult"))
+	key := make([]byte, 32)
+	if _, err := io.ReadFull(resultStream, key); err != nil {
+		return nil, err
+	}
+	return key, nil
 }
 
 // Encrypt slice byte
