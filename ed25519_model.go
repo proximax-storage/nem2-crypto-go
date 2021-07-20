@@ -11,9 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-
-	"golang.org/x/crypto/hkdf"
-	"golang.org/x/crypto/sha3"
 )
 
 // Ed25519SeedCryptoEngine wraps a cryptographic engine ed25519 and seed for this engine
@@ -179,56 +176,33 @@ func (ref *Ed25519BlockCipher) GetSharedKey(privateKey *PrivateKey, publicKey *P
 	return HashesSha3_256(sharedKey.Raw)
 }
 
-// GetSharedKey create shared bytes
-func (ref *Ed25519BlockCipher) GetSharedKeyHMac(privateKey *PrivateKey, publicKey *PublicKey, salt []byte) ([]byte, error) {
-
-	grA, err := NewEd25519EncodedGroupElement(publicKey.Raw)
-	if err != nil {
-		return nil, err
-	}
-	senderA, err := grA.Decode()
-	if err != nil {
-		return nil, err
-	}
-	senderA.PrecomputeForScalarMultiplication()
-	el, err := senderA.scalarMultiply(PrepareForScalarMultiply(privateKey))
-	if err != nil {
-		return nil, err
-	}
-	sharedKey, err := el.Encode()
-	if err != nil {
-		return nil, err
-	}
-	resultStream := hkdf.New(sha3.New256, sharedKey.Raw, salt, []byte("catapult"))
-	key := make([]byte, 32)
-	if _, err := io.ReadFull(resultStream, key); err != nil {
-		return nil, err
-	}
-	return key, nil
-}
-
 // Encrypt slice byte
-
 func (ref *Ed25519BlockCipher) EncryptGCM(input []byte) ([]byte, error) {
 	// Setup salt.
 	salt := make([]byte, ref.keyLength)
-
-	// Derive shared key.
-	sharedKey, err := ref.GetSharedKeyHMac(ref.senderKeyPair.PrivateKey, ref.recipientKeyPair.PublicKey, salt)
+	_, err := io.ReadFull(ref.seed, salt)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("Shared key: %x", sharedKey)
-	// Setup IV.
-	ivData := MathUtils.GetRandomByteArray(12)
 
+	// Derive shared key.
+	sharedKey, err := ref.GetSharedKey(ref.senderKeyPair.PrivateKey, ref.recipientKeyPair.PublicKey, salt)
+	if err != nil {
+		return nil, err
+	}
+	// Setup IV.
+	ivData := make([]byte, 12)
+	_, err = io.ReadFull(ref.seed, ivData)
+	if err != nil {
+		return nil, err
+	}
 	// Encode.
 	buf, err := ref.encodeGCM(input, sharedKey, ivData)
 	if err != nil {
 		return nil, err
 	}
 
-	result := append(append(buf[len(buf)-16:], ivData...), buf[:len(buf)-16]...)
+	result := append(append(salt, ivData...), buf...)
 
 	return result, nil
 }
@@ -238,12 +212,12 @@ func (ref *Ed25519BlockCipher) DecryptGCM(input []byte) ([]byte, error) {
 	if len(input) < 64 {
 		return nil, errors.New("input is to short for decryption")
 	}
-	salt := make([]byte, ref.keyLength)
-	tag := input[:16]
-	ivData := input[16 : 16+12]
-	encData := append(input[28:], tag[:]...)
+
+	salt := input[:ref.keyLength]
+	ivData := input[ref.keyLength : ref.keyLength+12]
+	encData := input[ref.keyLength+12:]
 	// Derive shared key.
-	sharedKey, err := ref.GetSharedKeyHMac(ref.recipientKeyPair.PrivateKey, ref.senderKeyPair.PublicKey, salt)
+	sharedKey, err := ref.GetSharedKey(ref.recipientKeyPair.PrivateKey, ref.senderKeyPair.PublicKey, salt)
 	if err != nil {
 		return nil, err
 	}

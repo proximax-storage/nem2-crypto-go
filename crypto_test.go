@@ -93,7 +93,20 @@ func TestDerivedKeyCompatNaCl(t *testing.T) {
 	salt := make([]byte, 32) //zeroed salt
 	sharedKey := deriveSharedKey(sender.PrivateKey.Raw, recipient.PublicKey.Raw, salt)
 	sharedKey2 := deriveSharedKey(recipient.PrivateKey.Raw, sender.PublicKey.Raw, salt)
+	fmt.Printf("%x,%x", sharedKey, sharedKey2)
 	assert.Equal(t, sharedKey, sharedKey2)
+}
+
+func TestDerivedKeyCompatNaClMany(t *testing.T) {
+	for i := 0; i < 20; i++ {
+		sender, _ := NewRandomKeyPair()
+		recipient, _ := NewRandomKeyPair()
+		salt := make([]byte, 32) //zeroed salt
+		sharedKey := deriveSharedKey(sender.PrivateKey.Raw, recipient.PublicKey.Raw, salt)
+		sharedKey2 := deriveSharedKey(recipient.PrivateKey.Raw, sender.PublicKey.Raw, salt)
+		assert.Equal(t, sharedKey, sharedKey2)
+	}
+
 }
 
 func TestDerivedKeyCompatDefault(t *testing.T) {
