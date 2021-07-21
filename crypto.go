@@ -210,13 +210,13 @@ func deriveSharedSecret(privateKey []byte, publicKey []byte) [32]byte {
 func deriveSharedKey(privateKey []byte, publicKey []byte, salt []byte) []byte {
 	sharedSecret := deriveSharedSecret(privateKey, publicKey)
 	// Underlying hash function for HMAC.
-	hash := sha3.New256
+	hash := sha256.New
 
 	// Non-secret salt, optional (can be nil).
 	// Recommended: hash-length random value.
 
 	// Non-secret context info, optional (can be nil).
-	info := []byte("catapult")
+	info := append([]byte("catapult"), 1)
 
 	// Generate three 128-bit derived keys.
 	hkdf := hkdf.New(hash, sharedSecret[:], salt, info)

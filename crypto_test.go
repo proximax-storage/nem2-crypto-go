@@ -99,8 +99,10 @@ func TestDerivedKeyCompatNaCl(t *testing.T) {
 
 func TestDerivedKeyCompatNaClMany(t *testing.T) {
 	for i := 0; i < 20; i++ {
-		sender, _ := NewRandomKeyPair()
-		recipient, _ := NewRandomKeyPair()
+		sender, err := NewRandomKeyPair()
+		assert.Nil(t, err)
+		recipient, err := NewRandomKeyPair()
+		assert.Nil(t, err)
 		salt := make([]byte, 32) //zeroed salt
 		sharedKey := deriveSharedKey(sender.PrivateKey.Raw, recipient.PublicKey.Raw, salt)
 		sharedKey2 := deriveSharedKey(recipient.PrivateKey.Raw, sender.PublicKey.Raw, salt)
@@ -109,6 +111,21 @@ func TestDerivedKeyCompatNaClMany(t *testing.T) {
 
 }
 
+func TestDerivedKeyCompatNaClFixed(t *testing.T) {
+	key, err := NewPrivateKeyfromHexString("2F985E4EC55D60C957C973BD1BEE2C0B3BA313A841D3EE4C74810805E6936053")
+	assert.Nil(t, err)
+	key2, err := NewPrivateKeyfromHexString("D6430327F90FAAD41F4BC69E51EB6C9D4C78B618D0A4B616478BD05E7A480950")
+	assert.Nil(t, err)
+	sender, err := NewKeyPair(key, nil, nil)
+	assert.Nil(t, err)
+	recipient, _ := NewKeyPair(key2, nil, nil)
+	assert.Nil(t, err)
+	salt := make([]byte, 32) //zeroed salt
+	sharedKey := deriveSharedKey(sender.PrivateKey.Raw, recipient.PublicKey.Raw, salt)
+	sharedKey2 := deriveSharedKey(recipient.PrivateKey.Raw, sender.PublicKey.Raw, salt)
+	fmt.Printf("%x,%x", sharedKey, sharedKey2)
+	assert.Equal(t, sharedKey, sharedKey2)
+}
 func TestDerivedKeyCompatDefault(t *testing.T) {
 	sender, err := NewRandomKeyPair()
 	assert.Nil(t, err)
