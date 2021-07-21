@@ -126,6 +126,21 @@ func TestDerivedKeyCompatNaClFixed(t *testing.T) {
 	fmt.Printf("%x,%x", sharedKey, sharedKey2)
 	assert.Equal(t, sharedKey, sharedKey2)
 }
+func TestDerivedKeyCompatNaClExpected(t *testing.T) {
+	key, err := NewPublicKeyfromHex("9952DB28FF8186DD45F11A0BCD72872729D42098C03BE024FC3E7D5BC2BE40F1")
+	assert.Nil(t, err)
+	key2, err := NewPrivateKeyfromHexString("D6430327F90FAAD41F4BC69E51EB6C9D4C78B618D0A4B616478BD05E7A480950")
+	assert.Nil(t, err)
+	recipient, _ := NewKeyPair(key2, nil, nil)
+	assert.Nil(t, err)
+	salt := make([]byte, 32) //zeroed salt
+	sharedKey := deriveSharedKey(recipient.PrivateKey.Raw, key.Raw, salt)
+	fmt.Printf("%x", sharedKey)
+	expected, err := hex.DecodeString("5410B86B33D5AE3519633A8C0686B8109163F337B2948C1C8A91AE7FE9FAE37C")
+	assert.Nil(t, err)
+	assert.Equal(t, sharedKey, expected)
+}
+
 func TestDerivedKeyCompatDefault(t *testing.T) {
 	sender, err := NewRandomKeyPair()
 	assert.Nil(t, err)

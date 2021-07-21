@@ -216,7 +216,7 @@ func deriveSharedKey(privateKey []byte, publicKey []byte, salt []byte) []byte {
 	// Recommended: hash-length random value.
 
 	// Non-secret context info, optional (can be nil).
-	info := append([]byte("catapult"), 1)
+	info := []byte("catapult")
 
 	// Generate three 128-bit derived keys.
 	hkdf := hkdf.New(hash, sharedSecret[:], salt, info)
